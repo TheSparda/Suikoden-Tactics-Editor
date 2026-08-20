@@ -1,0 +1,506 @@
+[
+  {
+    "name": "Kyril",
+    "offset": 56388792,
+    "offset_hex": "0x035C6CB8",
+    "weapon_byte": 14,
+    "weapon": "Noble",
+    "doc_note": "Noble"
+  },
+  {
+    "name": "Andarc",
+    "offset": 56389432,
+    "offset_hex": "0x035C6F38",
+    "weapon_byte": 7,
+    "weapon": "Staff-Rod",
+    "doc_note": "Staff"
+  },
+  {
+    "name": "Seneca",
+    "offset": 56390072,
+    "offset_hex": "0x035C71B8",
+    "weapon_byte": 4,
+    "weapon": "Bow",
+    "doc_note": "Bow"
+  },
+  {
+    "name": "Walter",
+    "offset": 56391352,
+    "offset_hex": "0x035C76B8",
+    "weapon_byte": 3,
+    "weapon": "Sword",
+    "doc_note": "Sword"
+  },
+  {
+    "name": "Corselia",
+    "offset": 56391992,
+    "offset_hex": "0x035C7938",
+    "weapon_byte": 7,
+    "weapon": "Staff-Rod",
+    "doc_note": "Staff"
+  },
+  {
+    "name": "Coop",
+    "offset": 56393272,
+    "offset_hex": "0x035C7E38",
+    "weapon_byte": 2,
+    "weapon": "Giant Sword",
+    "doc_note": "Great Sword"
+  },
+  {
+    "name": "Ornela",
+    "offset": 56393912,
+    "offset_hex": "0x035C80B8",
+    "weapon_byte": 8,
+    "weapon": "Spear",
+    "doc_note": "Spear"
+  },
+  {
+    "name": "Busk",
+    "offset": 56394552,
+    "offset_hex": "0x035C8338",
+    "weapon_byte": 8,
+    "weapon": "Spear",
+    "doc_note": "Spear"
+  },
+  {
+    "name": "Roget",
+    "offset": 56395192,
+    "offset_hex": "0x035C85B8",
+    "weapon_byte": 7,
+    "weapon": "Staff-Rod",
+    "doc_note": "Staff"
+  },
+  {
+    "name": "Kika",
+    "offset": 56395832,
+    "offset_hex": "0x035C8838",
+    "weapon_byte": 1,
+    "weapon": "Dual Sword",
+    "doc_note": "Dual Sword"
+  },
+  {
+    "name": "Sigurd",
+    "offset": 56396472,
+    "offset_hex": "0x035C8AB8",
+    "weapon_byte": 5,
+    "weapon": "Throwing Knife",
+    "doc_note": "Throwing Knifes"
+  },
+  {
+    "name": "Hervey",
+    "offset": 56397112,
+    "offset_hex": "0x035C8D38",
+    "weapon_byte": 3,
+    "weapon": "Sword",
+    "doc_note": "Sword"
+  },
+  {
+    "name": "Dario",
+    "offset": 56397752,
+    "offset_hex": "0x035C8FB8",
+    "weapon_byte": 9,
+    "weapon": "Axe",
+    "doc_note": "Axe"
+  },
+  {
+    "name": "Nalleo",
+    "offset": 56398392,
+    "offset_hex": "0x035C9238",
+    "weapon_byte": 9,
+    "weapon": "Axe",
+    "doc_note": "Axe"
+  },
+  {
+    "name": "Flare",
+    "offset": 56399032,
+    "offset_hex": "0x035C94B8",
+    "weapon_byte": 4,
+    "weapon": "Bow",
+    "doc_note": "Bow"
+  },
+  {
+    "name": "Akaghi",
+    "offset": 56399672,
+    "offset_hex": "0x035C9738",
+    "weapon_byte": 11,
+    "weapon": "Claws",
+    "doc_note": "Claws"
+  },
+  {
+    "name": "Mizuki",
+    "offset": 56400312,
+    "offset_hex": "0x035C99B8",
+    "weapon_byte": 11,
+    "weapon": "Claws",
+    "doc_note": "Claws"
+  },
+  {
+    "name": "Katarina",
+    "offset": 56400952,
+    "offset_hex": "0x035C9C38",
+    "weapon_byte": 7,
+    "weapon": "Staff-Rod",
+    "doc_note": "Staff"
+  },
+  {
+    "name": "Keneth",
+    "offset": 56401592,
+    "offset_hex": "0x035C9EB8",
+    "weapon_byte": 3,
+    "weapon": "Sword",
+    "doc_note": "Sword"
+  },
+  {
+    "name": "Gretchen",
+    "offset": 56402232,
+    "offset_hex": "0x035CA138",
+    "weapon_byte": 3,
+    "weapon": "Sword",
+    "doc_note": "Sword"
+  },
+  {
+    "name": "Paula",
+    "offset": 56402872,
+    "offset_hex": "0x035CA3B8",
+    "weapon_byte": 3,
+    "weapon": "Sword",
+    "doc_note": "Sword"
+  },
+  {
+    "name": "Jewel",
+    "offset": 56403512,
+    "offset_hex": "0x035CA638",
+    "weapon_byte": 3,
+    "weapon": "Sword",
+    "doc_note": "Sword"
+  },
+  {
+    "name": "Selma",
+    "offset": 56404152,
+    "offset_hex": "0x035CA8B8",
+    "weapon_byte": 2,
+    "weapon": "Giant Sword",
+    "doc_note": "Giant Sword"
+  },
+  {
+    "name": "Tal",
+    "offset": 56404792,
+    "offset_hex": "0x035CAB38",
+    "weapon_byte": 3,
+    "weapon": "Sword",
+    "doc_note": "Sword"
+  },
+  {
+    "name": "Axel",
+    "offset": 56405432,
+    "offset_hex": "0x035CADB8",
+    "weapon_byte": 2,
+    "weapon": "Giant Sword",
+    "doc_note": "Giant Sword"
+  },
+  {
+    "name": "Reinbach",
+    "offset": 56406072,
+    "offset_hex": "0x035CB038",
+    "weapon_byte": 16,
+    "weapon": "Rapier",
+    "doc_note": "Rapier"
+  },
+  {
+    "name": "Charlemagne",
+    "offset": 56406712,
+    "offset_hex": "0x035CB2B8",
+    "weapon_byte": 16,
+    "weapon": "Rapier",
+    "doc_note": "Rapier"
+  },
+  {
+    "name": "Rachel",
+    "offset": 56407352,
+    "offset_hex": "0x035CB538",
+    "weapon_byte": 8,
+    "weapon": "Spear",
+    "doc_note": "Spear"
+  },
+  {
+    "name": "Cedric",
+    "offset": 56407992,
+    "offset_hex": "0x035CB7B8",
+    "weapon_byte": 0,
+    "weapon": "?00",
+    "doc_note": ""
+  },
+  {
+    "name": "Jeane",
+    "offset": 56408632,
+    "offset_hex": "0x035CBA38",
+    "weapon_byte": 7,
+    "weapon": "Staff-Rod",
+    "doc_note": "Staff"
+  },
+  {
+    "name": "Gary",
+    "offset": 56409272,
+    "offset_hex": "0x035CBCB8",
+    "weapon_byte": 0,
+    "weapon": "?00",
+    "doc_note": ""
+  },
+  {
+    "name": "Ema",
+    "offset": 56409912,
+    "offset_hex": "0x035CBF38",
+    "weapon_byte": 0,
+    "weapon": "?00",
+    "doc_note": ""
+  },
+  {
+    "name": "Frederica",
+    "offset": 56410552,
+    "offset_hex": "0x035CC1B8",
+    "weapon_byte": 4,
+    "weapon": "Bow",
+    "doc_note": "Bow"
+  },
+  {
+    "name": "Pablo",
+    "offset": 56411192,
+    "offset_hex": "0x035CC438",
+    "weapon_byte": 7,
+    "weapon": "Staff-Rod",
+    "doc_note": "Staff"
+  },
+  {
+    "name": "Yu",
+    "offset": 56411832,
+    "offset_hex": "0x035CC6B8",
+    "weapon_byte": 0,
+    "weapon": "?00",
+    "doc_note": ""
+  },
+  {
+    "name": "Carrie",
+    "offset": 56412472,
+    "offset_hex": "0x035CC938",
+    "weapon_byte": 0,
+    "weapon": "?00",
+    "doc_note": ""
+  },
+  {
+    "name": "Millay",
+    "offset": 56413112,
+    "offset_hex": "0x035CCBB8",
+    "weapon_byte": 3,
+    "weapon": "Sword",
+    "doc_note": "Sword"
+  },
+  {
+    "name": "Jeremy",
+    "offset": 56413752,
+    "offset_hex": "0x035CCE38",
+    "weapon_byte": 3,
+    "weapon": "Sword",
+    "doc_note": "Sword"
+  },
+  {
+    "name": "Trishtan",
+    "offset": 56414392,
+    "offset_hex": "0x035CD0B8",
+    "weapon_byte": 3,
+    "weapon": "Sword",
+    "doc_note": "Sword"
+  },
+  {
+    "name": "Reinhold",
+    "offset": 56415032,
+    "offset_hex": "0x035CD338",
+    "weapon_byte": 8,
+    "weapon": "Spear",
+    "doc_note": "Spear"
+  },
+  {
+    "name": "Rene",
+    "offset": 56415672,
+    "offset_hex": "0x035CD5B8",
+    "weapon_byte": 0,
+    "weapon": "?00",
+    "doc_note": ""
+  },
+  {
+    "name": "America",
+    "offset": 56416312,
+    "offset_hex": "0x035CD838",
+    "weapon_byte": 3,
+    "weapon": "Sword",
+    "doc_note": "Sword"
+  },
+  {
+    "name": "Wendel",
+    "offset": 56416952,
+    "offset_hex": "0x035CDAB8",
+    "weapon_byte": 11,
+    "weapon": "Claws",
+    "doc_note": "Claws"
+  },
+  {
+    "name": "Eugene",
+    "offset": 56417592,
+    "offset_hex": "0x035CDD38",
+    "weapon_byte": 8,
+    "weapon": "Spear",
+    "doc_note": "Spear"
+  },
+  {
+    "name": "Mitsuba",
+    "offset": 56418232,
+    "offset_hex": "0x035CDFB8",
+    "weapon_byte": 2,
+    "weapon": "Giant Sword",
+    "doc_note": "Giant Sword"
+  },
+  {
+    "name": "Kate",
+    "offset": 56418872,
+    "offset_hex": "0x035CE238",
+    "weapon_byte": 5,
+    "weapon": "Throwing Knife",
+    "doc_note": "Throwing Knife"
+  },
+  {
+    "name": "Rita",
+    "offset": 56419512,
+    "offset_hex": "0x035CE4B8",
+    "weapon_byte": 13,
+    "weapon": "Hammer",
+    "doc_note": "Hammer"
+  },
+  {
+    "name": "Noah",
+    "offset": 56420152,
+    "offset_hex": "0x035CE738",
+    "weapon_byte": 11,
+    "weapon": "Claws",
+    "doc_note": "Claws"
+  },
+  {
+    "name": "Nalkul",
+    "offset": 56422072,
+    "offset_hex": "0x035CEEB8",
+    "weapon_byte": 11,
+    "weapon": "Claws",
+    "doc_note": "Claws"
+  },
+  {
+    "name": "Champo",
+    "offset": 56422712,
+    "offset_hex": "0x035CF138",
+    "weapon_byte": 11,
+    "weapon": "Claws",
+    "doc_note": "Claws"
+  },
+  {
+    "name": "Karl",
+    "offset": 56423352,
+    "offset_hex": "0x035CF3B8",
+    "weapon_byte": 12,
+    "weapon": "Fists",
+    "doc_note": "Fists"
+  },
+  {
+    "name": "Lino",
+    "offset": 56423992,
+    "offset_hex": "0x035CF638",
+    "weapon_byte": 8,
+    "weapon": "Spear",
+    "doc_note": "Spear"
+  },
+  {
+    "name": "Lazlo",
+    "offset": 56424632,
+    "offset_hex": "0x035CF8B8",
+    "weapon_byte": 1,
+    "weapon": "Dual Sword",
+    "doc_note": "Dual Sword"
+  },
+  {
+    "name": "Snowe",
+    "offset": 56425272,
+    "offset_hex": "0x035CFB38",
+    "weapon_byte": 3,
+    "weapon": "Sword",
+    "doc_note": "Sword"
+  },
+  {
+    "name": "Simeon",
+    "offset": 56429752,
+    "offset_hex": "0x035D0CB8",
+    "weapon_byte": 7,
+    "weapon": "Staff-Rod",
+    "doc_note": "Staff"
+  },
+  {
+    "name": "Lalacle",
+    "offset": 56434872,
+    "offset_hex": "0x035D20B8",
+    "weapon_byte": 12,
+    "weapon": "Fists",
+    "doc_note": "Fists"
+  },
+  {
+    "name": "Red Mercenary",
+    "offset": 56450232,
+    "offset_hex": "0x035D5CB8",
+    "weapon_byte": 3,
+    "weapon": "Sword",
+    "doc_note": "Sword"
+  },
+  {
+    "name": "Blue Mercenary",
+    "offset": 56450872,
+    "offset_hex": "0x035D5F38",
+    "weapon_byte": 8,
+    "weapon": "Spear",
+    "doc_note": "Spear"
+  },
+  {
+    "name": "Yellow Mercenary",
+    "offset": 56451512,
+    "offset_hex": "0x035D61B8",
+    "weapon_byte": 4,
+    "weapon": "Bow",
+    "doc_note": "Bow"
+  },
+  {
+    "name": "Mercenary Leader",
+    "offset": 56452152,
+    "offset_hex": "0x035D6438",
+    "weapon_byte": 7,
+    "weapon": "Staff-Rod",
+    "doc_note": "Staff"
+  },
+  {
+    "name": "Maxine",
+    "offset": 56468152,
+    "offset_hex": "0x035DA2B8",
+    "weapon_byte": 7,
+    "weapon": "Staff-Rod",
+    "doc_note": "Staff"
+  },
+  {
+    "name": "Snowe",
+    "offset": 56436792,
+    "offset_hex": "0x035D2838",
+    "weapon_byte": 3,
+    "weapon": "Sword",
+    "doc_note": "Child"
+  },
+  {
+    "name": "Kyril",
+    "offset": 56442552,
+    "offset_hex": "0x035D3EB8",
+    "weapon_byte": 14,
+    "weapon": "Noble",
+    "doc_note": "Child"
+  }
+]
