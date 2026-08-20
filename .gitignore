@@ -1,0 +1,23 @@
+# Game data / copyrighted / large — never commit
+*.iso
+ISO/
+Saves/
+Editor/
+_decomp/
+*.exe
+*.pnach
+Guides/
+HexEditing.rtf
+*.rtf
+
+# OS / cruft
+.DS_Store
+__pycache__/
+*.pyc
+*.bak
+
+# Local tooling
+.claude/
+
+# Release build output (attach to GitHub Releases, don't commit)
+dist/
