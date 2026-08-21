@@ -290,3 +290,53 @@ accepts it (format-level double-digest validation passes).
   diff to find the import/carryover flag byte and the party/gold/inventory/
   recruitment offsets, then crack the checksum by playtime-ordered diff (find the
   word that zeroes the sum). pnach party map (`0x0067xxxx`) is the RAM-side hint.
+
+## Text encoding CRACKED + S4 hero name / import (2026-08-21, real ISO + saves)
+
+### Game text encoding — 16-bit `0x8A` font page
+Game strings (names, dialogue) are **16-bit LE glyphs**: high byte `0x8A` (the
+standard font page), **low byte = ASCII − 0x20**; space = `0x8A00`. Control/format
+codes use other high bytes (`0x00C1`, `0xFFFF`, `0x00C4` = terminators/markers).
+This is why plain-ASCII/UTF-16 scans found nothing (the old "no ASCII name pool"
+note). Decode: `chr(low + 0x20)` when `hi == 0x8A`. Verified by decoding whole
+battle scripts and the per-character weapon/name table at ISO `0x035E38C0`
+(char-ID order: Andarc→Blade Rod/Axe/Halberd, Seneca→Honeybee/Wasp/Hornet, …).
+- **FILEDATA.BIN** (ISO `0x004B0000`, 472 MB) holds the resident DB. A packed
+  script archive at `0x03040890` uses a TOC of `(u16 id, 6×00, u32 off, u32 size)`
+  records; resource data starts at TOC-base + off. Names are also embedded as
+  literals in every map's dialogue (speaker tags), so they are **massively
+  duplicated + variable-length** → a clean in-place "rename any character" is not
+  feasible without rebuilding pointer tables. Not attempted.
+
+### Imported S4 hero name — SAVE field `0x58` (ASCII)
+The imported hero name is stored **in the save**, not the ISO, as plain ASCII in a
+`0x11`-byte slot at save `0x58` (real saves: "Sparda"; next metadata field "Sta"
+at `0x69`, then "Basel" at `0x7A`). `stsavefields.read/write_hero_name`, capped 16,
+NUL-padded, stays within the slot. **The in-game "L a z l o" spacing is a Tactics
+render bug in its ASCII-name path — the stored bytes are already space-free, so no
+save edit fixes it; the real fix is a `.pnach` code patch (needs EE-RAM RE).**
+
+### "Save data imported" = Have-Character flags for idx 55 + 56
+Diffed 3 imported vs 1 non-imported save (same card): the only import-correlated
+party bytes are **idx 55 (S4 Hero/Lazlo) and idx 56 (Snowe, Adult)** `+0x50`, each
+`0xE0`→`0xE1`. So the import bonus unlocks BOTH. `stsavefields.set_s4_import` /
+`s4_import_enabled` toggle both bit0s. (Global bytes `0x1070/78/7A` also differ but
+are unverified — left unwritten per verify-before-write.) Editor: **S4 Save Data**
+section (import toggle + hero rename), round-trip tested end-to-end via HTTP.
+
+### "L a z l o" spacing bug — render path traced (ELF), fix NOT shipped
+Disassembled `SLUS_212.45` (capstone MIPS32-LE, skipdata; code seg file `0x66000`
+↔ vaddr `0x100000`). The imported-name field render chain:
+- Menu dispatcher `0x00320994` loads the name RAM addr `0x0066EA28` (= save `0x58`)
+  and draws it + `+0x11`/`+0x22` ("Sta"/"Basel") — independently reconfirms the
+  0x11-byte slot stride.
+- **Name builder `0x0013B560`** (4 callers, all name menus): copies the ASCII name
+  into a temp buffer (loop @ `0x13B5EC`; byte `<0xA0` = literal, `>=0xA0` =
+  sprintf-escape via `0x00111FE8`, a varargs wrapper → `0x001128C0`). Default name
+  "Hero" @ data `0x00464B40` (plain ASCII, same path).
+- Hands the C-string to **shared text engine `0x001314C0`** — **14 callers**, so its
+  per-glyph advance can't be patched without affecting other UI text.
+Conclusion: the spacing is `0x1314C0`'s advance for raw-ASCII glyphs; a safe fix must
+live in the name-specific `0x13B560` path or a width table, and the exact advance/
+which on-screen text is affected needs a PCSX2 runtime trace (breakpoint `0x13B560`
+or read-watch `0x0066EA28`) to confirm before writing a `.pnach`. Not shipped in v1.1.0.

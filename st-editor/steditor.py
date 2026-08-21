@@ -222,6 +222,9 @@ class Handler(BaseHTTPRequestHandler):
                for k, (a, q) in enumerate(stsavefields.read_inventory(gb))]
         return {"globals": stsavefields.read_globals(gb), "chars": chars,
                 "inventory": inv,
+                "hero_name": stsavefields.read_hero_name(gb),
+                "hero_name_max": stsavefields.HERO_NAME_MAX,
+                "s4_import": stsavefields.s4_import_enabled(gb),
                 "stat_keys": stsavefields.STATS, "plus_keys": stsavefields.PLUS,
                 "equip_keys": stsavefields.EQUIP, "rune_keys": stsavefields.RUNE_SLOTS}
 
@@ -238,6 +241,10 @@ class Handler(BaseHTTPRequestHandler):
         if gl:
             gb = stsavefields.write_globals(gb, gold=gl.get("gold"),
                                             skill_points=gl.get("skill_points"))
+        if d.get("hero_name") is not None:
+            gb = stsavefields.write_hero_name(gb, d.get("hero_name"))
+        if d.get("s4_import") is not None:
+            gb = stsavefields.set_s4_import(gb, bool(d.get("s4_import")))
         for ie in d.get("inv_edits") or []:
             gb = stsavefields.write_inventory_slot(gb, int(ie["slot"]),
                                                    int(ie["id"]), int(ie["qty"]))
@@ -554,6 +561,15 @@ PAGE = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
      <div><label>Gold (potch)</label><input id="svGold" type="number" min="0" max="9999999" style="width:140px"></div>
      <div><label>Skill points</label><input id="svSP" type="number" min="0" max="9999999" style="width:140px"></div>
     </div>
+    <h3 style="color:var(--gold);font-size:14px;margin:16px 0 6px">S4 Save Data</h3>
+    <div class="row" style="align-items:flex-end">
+     <div><label title="Suikoden IV import bonus: unlocks Lazlo + Snowe (their Have-Character flags)">Save data imported</label><br><input id="svImport" type="checkbox" style="width:22px;height:22px"></div>
+     <div><label>Imported hero name</label><input id="svHero" type="text" maxlength="16" style="width:170px"></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin:2px 0 4px;max-width:640px">
+     <b>Save data imported</b> enables the Suikoden IV bonus — it unlocks both imported units, <b>Lazlo</b> and <b>Snowe</b>. &nbsp;
+     The <b>hero name</b> is the S4 hero's name stored on the save. Note: Tactics renders it with a space between every letter (<i>"L a z l o"</i>) — a game-side display bug that editing the name can't fix.
+    </div>
     <h3 style="color:var(--gold);font-size:14px;margin:16px 0 6px">Character</h3>
     <div class="row">
      <div style="flex:1;min-width:220px"><label>Character (party slot)</label><select id="svChar"></select></div>
@@ -766,6 +782,8 @@ function svRenderInv(){
 function svApplyState(st){
   SVD=st; SV_DIRTY_CH.clear(); SV_DIRTY_INV.clear(); ensureItemsDL();
   $('#svGold').value=st.globals.gold; $('#svSP').value=st.globals.skill_points;
+  $('#svHero').value=st.hero_name||''; if(st.hero_name_max)$('#svHero').maxLength=st.hero_name_max;
+  $('#svImport').checked=!!st.s4_import;
   $('#svChar').innerHTML=st.chars.map((c,i)=>`<option value="${i}">${c.name}${c.recruited?'':' (not recruited)'}</option>`).join('');
   svRenderChar(); svRenderInv();
 }
@@ -774,7 +792,8 @@ async function svWrite(){
   const char_edits=[...SV_DIRTY_CH].map(i=>({index:i,char:SVD.chars[i]}));
   const inv_edits=[...SV_DIRTY_INV].map(s=>({slot:s,id:SVD.inventory[s].id,qty:SVD.inventory[s].qty}));
   const globals={gold:+$('#svGold').value||0,skill_points:+$('#svSP').value||0};
-  const r=await jpost('/api/save_write',{edits,char_edits,inv_edits,globals,target:$('#svTarget').value,out:$('#svOut').value,card:$('#svCard').value,folder:$('#svFolder').value});
+  const hero_name=$('#svHero').value, s4_import=$('#svImport').checked;
+  const r=await jpost('/api/save_write',{edits,char_edits,inv_edits,globals,hero_name,s4_import,target:$('#svTarget').value,out:$('#svOut').value,card:$('#svCard').value,folder:$('#svFolder').value});
   msg($('#svWriteMsg'),r.error||r.message,!r.error);
   if(!r.error&&r.state)svApplyState(r.state);
 }
