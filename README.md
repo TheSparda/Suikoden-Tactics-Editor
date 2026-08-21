@@ -60,6 +60,12 @@ other (the same PAL save as `.xps`, `.cbs`, and `.max` decodes byte-identically)
 - **Magic levels** — overall + current, 4 slots each.
 - **Recruitment** — per-character, **including the Suikoden IV hero unlock**
   (Lazlo's recruit flag; the game's import-unlocked secret characters).
+- **Save data imported** — one toggle for the whole Suikoden IV import bonus:
+  flips the Have-Character flags for both imported units, **Lazlo and Snowe**
+  (verified by diffing imported vs non-imported saves).
+- **Imported hero name** — rename the imported S4 hero (the ASCII name stored on
+  the save, e.g. `Sparda`). Note: Tactics displays this name with a space between
+  every letter (`L a z l o`) — a game-side display bug that editing can't fix.
 - **Gold**, **skill points**, and the full **500-slot inventory** (type-ahead
   item names + quantities).
 

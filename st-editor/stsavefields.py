@@ -54,6 +54,22 @@ INV_OFF = soff(0x6795B8)
 INV_SLOTS = 500
 GOLD_MAX = 9_999_999
 
+# Imported Suikoden IV hero name (ASCII, NUL-padded) used on the save-select
+# screen and as the in-game unit label. Verified: real saves hold "Sparda" at
+# save 0x58 in a 0x11-byte slot; the next metadata field ("Sta") begins at 0x69,
+# so writes must stay within [0x58, 0x69). NOTE: the game renders the imported
+# name with a space between every letter ("L a z l o") regardless of the stored
+# bytes — that is a Tactics display bug in its ASCII-name path, not fixable here.
+HERO_NAME_OFF = 0x58
+HERO_NAME_SLOT = 0x11           # 17-byte field; keeps the last byte a NUL terminator
+HERO_NAME_MAX = HERO_NAME_SLOT - 1
+
+# Suikoden IV "save data imported" bonus = the Have-Character flags for the two
+# imported units, Lazlo (party idx 55) + adult Snowe (idx 56). Verified by diffing
+# imported vs non-imported saves: both go 0xE0 (present-but-locked) -> 0xE1
+# (recruited) on import. Same bit0 the Recruitment editor toggles per-character.
+S4_IMPORT_IDX = (55, 56)
+
 STATS = ["STR", "SKL", "MAG", "EVA", "PDF", "MDF", "SPD", "LUC"]
 PLUS = ["HP+", "STR+", "SKL+", "MAG+", "EVA+", "PDF+", "MDF+", "SPD+", "LUC+"]
 EQUIP = ["Body", "Hands"] + ["Other %d" % i for i in range(1, 9)]
@@ -142,6 +158,39 @@ def write_char(data, idx, ch):
         out[b + 0x49 + k] = ch["magic_current"][k] & 0xFF
     flag = out[b + 0x50]
     out[b + 0x50] = (flag & ~1) | (1 if ch["recruited"] else 0)
+    return bytes(out)
+
+
+def read_hero_name(data):
+    """Imported S4-hero name as a str (NULs stripped)."""
+    raw = bytes(data[HERO_NAME_OFF:HERO_NAME_OFF + HERO_NAME_SLOT])
+    return raw.split(b"\x00", 1)[0].decode("ascii", "replace")
+
+
+def write_hero_name(data, name):
+    """Write the imported S4-hero name (ASCII, truncated to HERO_NAME_MAX and
+    NUL-padded to fill the slot). Checksums NOT recomputed here."""
+    enc = str(name).encode("ascii", "ignore")[:HERO_NAME_MAX]
+    out = bytearray(data)
+    out[HERO_NAME_OFF:HERO_NAME_OFF + HERO_NAME_SLOT] = \
+        enc + b"\x00" * (HERO_NAME_SLOT - len(enc))
+    return bytes(out)
+
+
+def s4_import_enabled(data):
+    """True when the Suikoden IV import bonus is active (Lazlo + Snowe unlocked)."""
+    return all(bool(data[PARTY_OFF + i * PARTY_STRIDE + 0x50] & 1)
+               for i in S4_IMPORT_IDX)
+
+
+def set_s4_import(data, on=True):
+    """Enable/disable the S4 import bonus by flipping bit0 of the Have-Character
+    flag for each imported unit (idx 55 Lazlo, idx 56 Snowe). Checksums NOT
+    recomputed here."""
+    out = bytearray(data)
+    for i in S4_IMPORT_IDX:
+        o = PARTY_OFF + i * PARTY_STRIDE + 0x50
+        out[o] = (out[o] & ~1) | (1 if on else 0)
     return bytes(out)
 
 
