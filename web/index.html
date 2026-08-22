@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1a1113">
+<meta name="description" content="Edit Suikoden Tactics (PS2) memory-card saves in your browser. 100% client-side — your save never leaves your device.">
+<title>Suikoden Tactics — Save Editor</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-theme="dark">
+
+<div id="boot">
+ <div class="spin"></div>
+ <div id="bootMsg" style="color:var(--gold)">Loading Python runtime…</div>
+ <div style="color:var(--muted);font-size:12px;max-width:420px;text-align:center">
+  First load fetches the CPython (Pyodide) runtime once, then it works offline.
+ </div>
+</div>
+
+<header>
+ <h1>Suikoden Tactics — Save Editor</h1>
+ <span class="sub">USA · PAL &nbsp;|&nbsp; 100% in your browser — nothing is uploaded</span>
+ <span class="spacer"></span>
+ <button class="ghost" id="themeBtn">Theme</button>
+</header>
+
+<main>
+ <div class="card">
+  <small>Open any Suikoden Tactics save container (<b>.sps / .xps / .cbs / .max / .psu</b>)
+  or a raw PS2 memory-card image (<b>.ps2</b>). Party stats, equipment, runes, magic
+  levels, recruitment (incl. the Suikoden IV hero unlock), gold, skill points and
+  inventory are decoded from the <b>verified</b> field map; both game checksums
+  (CRC-32 + MD5) are recomputed on write. Your file is processed locally and never
+  leaves this device.</small>
+  <div id="drop" class="drop" style="margin-top:12px">
+   <b>Tap to choose a save</b> — or drag &amp; drop a file here<br>
+   <small>.sps · .xps · .cbs · .max · .psu · .ps2</small>
+  </div>
+  <input id="file" type="file" accept=".sps,.xps,.cbs,.max,.psu,.ps2,application/octet-stream" style="display:none">
+  <div id="openMsg" class="msg"></div>
+ </div>
+
+ <div id="body" class="hide">
+  <!-- card folder switcher -->
+  <div class="card hide" id="cardSwitchCard">
+   <div class="sechead"><h2>Memory card</h2></div>
+   <small>This card image holds more than one Suikoden Tactics save folder. Pick which one to edit.</small>
+   <div class="row" style="margin-top:8px">
+    <div style="flex:1;min-width:220px"><label>Save folder on card</label><select id="folderSel"></select></div>
+   </div>
+  </div>
+
+  <div class="card">
+   <h3 class="sub-h" style="margin-top:0">Globals</h3>
+   <div class="row">
+    <div><label>Gold (potch)</label><input id="gold" type="number" min="0" max="9999999" style="width:150px"></div>
+    <div><label>Skill points</label><input id="sp" type="number" min="0" max="9999999" style="width:150px"></div>
+   </div>
+
+   <h3 class="sub-h">S4 Save Data</h3>
+   <div class="row" style="align-items:flex-end">
+    <div><label title="Suikoden IV import bonus: unlocks Lazlo + Snowe (their Have-Character flags)">Save data imported</label><br><input id="import" type="checkbox" style="width:22px;height:22px"></div>
+    <div><label>Imported hero name</label><input id="hero" type="text" maxlength="16" style="width:180px"></div>
+   </div>
+   <div style="font-size:11px;color:var(--muted);margin:6px 0 0;max-width:660px">
+    <b>Save data imported</b> enables the Suikoden IV bonus — it unlocks both imported units, <b>Lazlo</b> and <b>Snowe</b>.
+    The <b>hero name</b> is the S4 hero's name stored on the save. Note: Tactics renders it with a space between every
+    letter (<i>"L a z l o"</i>) — a game-side display bug that editing the name can't fix.
+   </div>
+  </div>
+
+  <div class="card">
+   <h3 class="sub-h" style="margin-top:0">Character</h3>
+   <div class="row">
+    <div style="flex:1;min-width:220px"><label>Character (party slot)</label><select id="char"></select></div>
+    <div><label>Recruited</label><br><input id="recruited" type="checkbox" style="width:22px;height:22px"></div>
+    <div><label>EXP</label><input id="exp" type="number" min="0" style="width:120px"></div>
+    <div><label>HP</label><input id="hpc" type="number" min="0" max="9999" style="width:90px"></div>
+    <div><label>HP max</label><input id="hpm" type="number" min="0" max="9999" style="width:90px"></div>
+   </div>
+   <div style="margin-top:10px"><label>Stats</label><div class="grid" id="stats"></div></div>
+   <div style="margin-top:10px"><label>Plus stats (equipment bonuses)</label><div class="grid" id="plus"></div></div>
+   <div style="margin-top:10px"><label>Equipment</label><div class="grid" id="equip"></div></div>
+   <div style="margin-top:10px"><label>Runes</label><div class="grid" id="runes"></div></div>
+   <div style="margin-top:10px"><label>Magic levels (overall / current, slots 1–4)</label><div class="grid" id="magic"></div></div>
+  </div>
+
+  <div class="card">
+   <h3 class="sub-h" style="margin-top:0">Inventory</h3>
+   <div class="row">
+    <div style="flex:1"><label>Filter</label><input id="invFilter" placeholder="item name or id"></div>
+    <div><label>Show empty slots</label><br><input id="invEmpty" type="checkbox" style="width:22px;height:22px"></div>
+   </div>
+   <div style="max-height:340px;overflow:auto;margin-top:8px">
+    <table><thead><tr><th>Slot</th><th>Item</th><th>Qty</th></tr></thead><tbody id="invBody"></tbody></table>
+   </div>
+   <details style="margin-top:12px">
+    <summary style="color:var(--muted);cursor:pointer">Advanced: raw byte edits</summary>
+    <div id="edits"></div>
+    <div class="row" style="margin-top:6px"><button class="ghost" id="addEdit">+ add byte edit</button></div>
+   </details>
+  </div>
+
+  <div class="card">
+   <h3 class="sub-h" style="margin-top:0">Save &amp; download</h3>
+   <div class="row">
+    <div><label>Export as</label><select id="target">
+     <option value="psu">.psu (mymc / uLaunchELF import)</option>
+     <option value="sps">.sps/.xps repack</option>
+     <option value="card">inject into card image</option>
+    </select></div>
+    <button id="write">Apply edits &amp; download</button>
+   </div>
+   <small id="targetHint" style="display:block;margin-top:8px"></small>
+   <div class="msg secmsg" id="writeMsg"></div>
+  </div>
+ </div>
+
+ <div class="card">
+  <details>
+   <summary style="color:var(--gold);cursor:pointer;font-weight:600">How this works &amp; safety</summary>
+   <div style="margin-top:8px;font-size:13px;color:var(--muted)">
+    This page runs the desktop editor's Python save code unchanged inside
+    <a href="https://pyodide.org" target="_blank" rel="noopener">Pyodide</a> (CPython compiled to WebAssembly).
+    Your save is read into an in-memory filesystem, edited, and read back out for download — it is
+    never sent to any server. Add this page to your Android home screen (browser menu → <i>Install app</i> /
+    <i>Add to Home screen</i>) to use it offline. Always keep a backup of your original save.
+   </div>
+  </details>
+ </div>
+</main>
+
+<footer>Made by Sparda · <a href="https://github.com/TheSparda/Suikoden-Tactics-Editor" target="_blank" rel="noopener">github.com/TheSparda/Suikoden-Tactics-Editor</a></footer>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

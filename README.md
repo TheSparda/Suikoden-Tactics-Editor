@@ -11,6 +11,12 @@ saves, or copyrighted binaries are included in this repo.
 > **Feature requests / Support** available on the Toran Castle Discord:
 > https://discord.gg/KesHMX5P2Z
 
+> **No install? Edit saves in your browser:**
+> **https://thesparda.github.io/Suikoden-Tactics-Editor/web/** — the save editor
+> runs the same Python code entirely client-side (via Pyodide/WebAssembly), works
+> offline, and installs to an Android home screen. Your save never leaves your
+> device. See [`web/`](web/).
+
 ---
 
 ## Quick start
