@@ -69,19 +69,25 @@ other (the same PAL save as `.xps`, `.cbs`, and `.max` decodes byte-identically)
 - **Gold**, **skill points**, and the full **500-slot inventory** (type-ahead
   item names + quantities).
 
+**Opens raw `.ps2` memory cards directly** — point *Open save* at a `.ps2` card
+(type a path, use the native file picker on an empty path, or click a card in
+*Scan for saves*) and it loads the Suikoden Tactics save straight off the card.
+If the card holds more than one ST save, a picker lets you switch between them.
+
 **Find your saves automatically** — *Scan for saves* walks the project folder and
 the common PCSX2 memory-card directories, lists every ST save and `.ps2` card it
-finds, and lets you click a result to open it or target a card folder for
-injection.
+finds, and lets you click a result to open it (card folders included).
 
-**Write it back** three ways:
+**Write it back** — including straight back into the card:
 
 - **`.psu`** — import via mymc / uLaunchELF (works for any slot, incl. new ones).
 - **`.sps` / `.xps`** — repack in place (byte-identical when unedited).
-- **Inject into a memory card** — overwrite the game file inside an existing
-  folder on a `.ps2` card, writing a **new** card image (your original is never
-  touched). ECC is recomputed and the header slot number is matched to the
-  target folder automatically.
+- **Save back into a memory card** — when you opened from a `.ps2` card, writing
+  with the card as the output overwrites the game file in place and rewrites the
+  card, keeping a one-time pristine `.bak` of the whole card first. Point the
+  output at a different path instead to write a **new** card image and leave the
+  original untouched. Either way ECC is recomputed and the header slot number is
+  matched to the target folder automatically.
 
 > Format-level integrity (CRC-32 + MD5) is always recomputed, so edited saves are
 > well-formed. As a final acceptance step, load one edited save in PCSX2 to

@@ -33,17 +33,25 @@ SPS_MAGIC = b"\x0d\0\0\0SharkPortSave"
 REC_STRIDE = 0x188
 
 
+def pick_game_file(files):
+    """From a normalized [(name, bytes), ...] folder, return (game_file_name,
+    game_bytes) — the one entry that is not an icon/metadata file."""
+    for name, data in files:
+        n = name.lower()
+        if n not in ("icon.sys", "rap.ico") and not n.endswith(".ico") \
+                and n != "icon.sys":
+            return name, data
+    raise ValueError("no game data file found in save folder")
+
+
 def open_game_save(path):
-    """Open ANY supported container (.sps/.xps/.cbs/.max/.psu) and return
-    (dirname, game_file_name, game_bytes). Uses stsaveio for decoding."""
+    """Open ANY supported container (.sps/.xps/.cbs/.max/.psu) or a raw .ps2
+    memory-card image and return (dirname, game_file_name, game_bytes)."""
     if stsaveio is None:
         raise RuntimeError("stsaveio module not available")
     dn, files = stsaveio.open_any(path)
-    for name, data in files:
-        n = name.lower()
-        if n not in ("icon.sys", "rap.ico") and not n.endswith(".ico"):
-            return dn, name, data
-    raise ValueError("no game data file in %s" % path)
+    gname, data = pick_game_file(files)
+    return dn, gname, data
 
 
 def _rstr(d, o):

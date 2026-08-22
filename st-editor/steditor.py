@@ -192,22 +192,32 @@ class Handler(BaseHTTPRequestHandler):
         path = (d.get("path") or "").strip().strip('"')
         if not path or not os.path.exists(path):
             return self._send(400, {"error": "File not found: %s" % path})
+        is_card = stsaveio.is_ps2_card(path)
+        folder = (d.get("folder") or "").strip() or None
         try:
-            dn, files = stsaveio.open_any(path)
-            gname, gbytes = stsaveedit.open_game_save(path)[1:]
+            if is_card:
+                dn, files = stsaveio.open_ps2_card(path, folder)
+                card_saves = stsaveio.list_ps2_card_saves(path)
+            else:
+                dn, files = stsaveio.open_any(path)
+                card_saves = []
+            gname, gbytes = stsaveedit.pick_game_file(files)
         except Exception as e:
             return self._send(400, {"error": "Could not open save: %s" % e})
         ext = os.path.splitext(path)[1].lower().lstrip(".")
         crc_ok, md5_ok = stsavefields.verify(gbytes)
         STATE["save"] = {"path": path, "ext": ext, "dirname": dn,
                          "gamename": gname, "bytes": bytearray(gbytes),
-                         "files": files}
+                         "files": files,
+                         "is_card": is_card, "card": path if is_card else "",
+                         "folder": dn if is_card else ""}
         return self._send(200, {
             "message": "Opened %s (%s) — %d bytes, checksums %s"
                        % (dn, gname, len(gbytes),
                           "OK" if crc_ok and md5_ok else "BAD (crc=%s md5=%s)" % (crc_ok, md5_ok)),
             "dirname": dn, "gamename": gname, "ext": ext, "size": len(gbytes),
             "can_sps": ext in ("sps", "xps"),
+            "is_card": is_card, "card_saves": card_saves, "folder": dn if is_card else "",
             "state": self._save_state(bytes(gbytes))})
 
     @staticmethod
@@ -297,14 +307,25 @@ class Handler(BaseHTTPRequestHandler):
                 tail = folder.rsplit("-", 1)[-1]
                 if tail.isdigit():
                     cb = stsavefields.fix_checksums(stsavefields.set_slot(cb, int(tail)))
+                # saving back into the SAME card: keep a one-time pristine .bak
+                inplace = os.path.abspath(out) == os.path.abspath(card)
+                if inplace:
+                    bak = card + ".bak"
+                    if not os.path.exists(bak):
+                        import shutil
+                        shutil.copy2(card, bak)
                 mc.replace_file_data(dc, gn, cb); mc.write(out)
                 v = stsave.PS2MC(out)
                 dc2 = next(x["cluster"] for x in v.root_entries() if x["name"] == folder)
                 ok = v.read_file(dc2, gn) == cb
                 chk, match = v.verify_ecc()
                 st["bytes"] = gb
-                return self._send(200, {"message": "Injected into %s/%s -> %s (re-read %s, ECC %d/%d)"
-                                        % (folder, gn, out, "OK" if ok else "MISMATCH", match, chk),
+                where = ("saved back into card %s" % out) if inplace \
+                    else ("wrote new card image -> %s" % out)
+                bakmsg = " (original backed up to %s.bak)" % card if inplace else ""
+                return self._send(200, {"message": "%s [%s/%s] — re-read %s, ECC %d/%d%s"
+                                        % (where, folder, gn, "OK" if ok else "MISMATCH",
+                                           match, chk, bakmsg),
                                         "state": self._save_state(bytes(gb))})
         except Exception as e:
             return self._send(400, {"error": "%s" % e})
@@ -598,10 +619,14 @@ PAGE = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
      <div><label>Export as</label><select id="svTarget"><option value="psu">.psu (mymc import)</option><option value="sps">.sps/.xps repack</option><option value="card">inject into card folder</option></select></div>
      <div style="flex:1;min-width:220px"><label>Output path</label><input id="svOut" type="text" placeholder="/path/to/output"></div>
     </div>
+    <div class="row" id="svCardSwitch" style="display:none">
+     <div><label>Save on card (this card holds more than one)</label><select id="svFolderSel"></select></div>
+    </div>
     <div class="row" id="svCardRow" style="display:none">
      <div style="flex:1;min-width:220px"><label>Card (.ps2) path</label><input id="svCard" type="text" placeholder="/path/to/Mcd.ps2"></div>
      <div style="flex:1;min-width:160px"><label>Folder on card</label><input id="svFolder" type="text" placeholder="BASLUS-21245-00"></div>
     </div>
+    <div id="svCardHint" style="display:none;font-size:11px;color:var(--muted);margin:2px 0 4px">Opened from a memory card. <b>Write / export</b> with target <b>inject into card folder</b> and Output = the same card path saves your edits straight back into the card (a one-time <code>.bak</code> of the card is written first).</div>
     <div class="row" style="margin-top:8px"><button id="svWrite">Write / export</button></div>
     <div class="msg secmsg" id="svWriteMsg"></div>
    </div>
@@ -798,11 +823,11 @@ async function svWrite(){
   if(!r.error&&r.state)svApplyState(r.state);
 }
 function cleanPath(p){return (p||'').trim().replace(/^["']|["']$/g,'').replace(/^file:\/\//,'').trim();}
-async function svOpenPath(path){
+async function svOpenPath(path,folder){
   path=cleanPath(path);
   msg($('#svMsg'),'Opening…',true);
   let r;
-  try{ if(!SVLISTS)SVLISTS=await jget('/api/lists'); r=await jpost('/api/save_open',{path}); }
+  try{ if(!SVLISTS)SVLISTS=await jget('/api/lists'); r=await jpost('/api/save_open',{path,folder:folder||''}); }
   catch(e){ msg($('#svMsg'),'Request failed (is the editor still running? reload the page): '+e.message,false); return; }
   if(r.error){msg($('#svMsg'),r.error,false);$('#svBody').classList.add('hide');return;}
   $('#svPath').value=path;
@@ -810,7 +835,26 @@ async function svOpenPath(path){
   const sps=$('#svTarget option[value=sps]'); if(sps)sps.disabled=!r.can_sps;
   $('#svEdits').innerHTML='';
   svApplyState(r.state);
+  svSetCardContext(r,path);
   $('#svBody').scrollIntoView({behavior:'smooth',block:'start'});
+}
+// When a raw .ps2 card is opened, wire up save-back-to-card and a folder switcher.
+function svSetCardContext(r,path){
+  const row=$('#svCardSwitch'), hint=$('#svCardHint');
+  if(r.is_card){
+    $('#svTarget').value='card';
+    $('#svCardRow').style.display='flex';
+    if(hint)hint.style.display='block';
+    $('#svCard').value=path; $('#svFolder').value=r.folder||'';
+    $('#svOut').value=path;   // default: save back into the same card
+    const others=(r.card_saves||[]);
+    if(others.length>1){
+      row.style.display='flex';
+      const sel=$('#svFolderSel');
+      sel.innerHTML=others.map(f=>`<option value="${f}"${f===r.folder?' selected':''}>${f}</option>`).join('');
+      sel.onchange=()=>svOpenPath(path,sel.value);
+    } else { row.style.display='none'; }
+  } else { if(row)row.style.display='none'; if(hint)hint.style.display='none'; }
 }
 async function svScan(){
   msg($('#svMsg'),'Scanning for saves and memory cards…',true);
@@ -825,9 +869,7 @@ async function svScan(){
     return `<tr><td>${c.file}</td><td>${c.folders}</td><td>${links}</td></tr>`;
   }).join('')||'<tr><td colspan=3>none found</td></tr>';
   $$('#svScanCards a[data-card]').forEach(a=>a.onclick=(e)=>{e.preventDefault();
-    $('#svTarget').value='card';$('#svCardRow').style.display='flex';
-    $('#svCard').value=a.dataset.card;$('#svFolder').value=a.dataset.folder;
-    msg($('#svWriteMsg'),'Card injection target set: '+a.dataset.folder,true);});
+    svOpenPath(a.dataset.card,a.dataset.folder);});
 }
 function initSave(){
   $('#svOpen').onclick=async()=>{
