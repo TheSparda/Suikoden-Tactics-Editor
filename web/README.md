@@ -9,6 +9,26 @@ browser**. Your file is never uploaded anywhere.
 Supports every container the desktop editor does:
 `.sps` · `.xps` · `.cbs` · `.max` · `.psu` · raw `.ps2` memory-card images.
 
+## Features
+
+- **Searchable pickers** for every item, rune and equipment slot (type a name or
+  id) — usable with 286 items on a phone, no giant native dropdowns.
+- **Review-changes confirmation** — an explicit *old → new* list of only the
+  fields you actually changed, before anything is written.
+- **Per-field dirty highlight + one-tap revert (↺)**, a live **"N unsaved"**
+  badge, and a **beforeunload guard** so you never lose edits by accident.
+- **Multi-slot memory cards** — pick which save folder on the card to edit; ECC
+  is recomputed and re-verified on write.
+- **Last opened** — one tap to reopen your previous save (stored in IndexedDB,
+  never uploaded).
+- **Deliver three ways:** download, **save in place** to the file you opened
+  (desktop Chromium, File System Access), or **Share…** to another app (Android).
+  Missing capabilities degrade gracefully to download.
+- **Installable PWA** with a **Share-target** — share a save *into* the app from
+  your file manager — and offline support after first load.
+- Staged **boot progress**, light/dark themes, and a mobile-first layout with
+  safe-area insets and no horizontal overflow down to 320 px.
+
 ## How it works
 
 The desktop editor's Python save code (`st-editor/stsaveio.py`,
@@ -37,11 +57,25 @@ Pyodide runtime (~a few MB) from a CDN; every load after that is cached.
 
 | File | Purpose |
 |---|---|
-| `index.html` | UI |
-| `style.css` | theme (ported from the desktop editor) |
-| `app.js` | Pyodide bootstrap, module loading, UI wiring, download |
+| `index.html` | UI shell + PWA meta |
+| `style.css` | theme (ported from the desktop editor), mobile-first |
+| `app.js` | Pyodide bootstrap, pickers, diff/review, dirty tracking, delivery |
 | `st_glue.py` | thin Python glue that drives the unchanged desktop modules |
-| `manifest.webmanifest`, `sw.js`, `icons/` | PWA / offline |
+| `manifest.webmanifest`, `sw.js`, `icons/` | PWA / offline / share-target |
+| `tests/` | `validate.mjs` (static), `save_roundtrip.py` (engine), `e2e.mjs` (headless) |
+
+## Tests
+
+```bash
+cd web
+npm test        # static validation + engine round-trip (skips e2e)
+npm run test:all # + headless Chromium e2e (needs Playwright installed)
+```
+
+`save_roundtrip.py` ships **no game data** — it builds a synthetic, valid save
+from the engine's own offset constants, so the tests can't drift from the code.
+Each layer self-skips cleanly if its heavy dependency (python3 / Playwright) is
+absent, so minimal CI never breaks.
 
 `app.js` fetches the save modules and the data tables it needs
 (`st_ram_party_map.json`, `st_shop_items.json`, `st_runes.json`) from

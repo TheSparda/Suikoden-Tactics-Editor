@@ -1,0 +1,12 @@
+{
+  "name": "suikoden-tactics-web-editor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Client-side Suikoden Tactics save editor (Pyodide PWA) — tests.",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/validate.mjs && node tests/save-roundtrip.mjs",
+    "test:all": "node tests/validate.mjs && node tests/save-roundtrip.mjs && node tests/e2e.mjs",
+    "test:e2e": "node tests/e2e.mjs"
+  }
+}
