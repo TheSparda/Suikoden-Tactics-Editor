@@ -285,12 +285,17 @@
     }
   }
 
-  function tableRowName(name, id) {
-    if (name === 'items' || name === 'itemprice') { const n = itemName(id); return n ? `${id} — ${n}` : `${id}`; }
-    if (name === 'skills') { const n = mapLabel('skills', id); return n.includes('?') ? `${id}` : `${id} — ${n}`; }
-    if (name === 'enemies') { const n = mapLabel('enemies', id); return n.includes('?') ? `${id}` : `${id} — ${n}`; }
-    return `${id}`;
+  // Record-id → English name. Name maps are 3-digit DECIMAL-keyed and the table
+  // record index equals the name id (RE-verified: itemprice rec_id 1 = Medicine,
+  // rec_id 2 = Mega Medicine). Shops/rune-shops have no name table.
+  function decName(mapName, id) { const m = D.maps[mapName] || {}; return m[String(id).padStart(3, '0')] || m[String(id)] || ''; }
+  function recordName(name, id) {
+    if (name === 'items' || name === 'itemprice') return itemName(id);
+    if (name === 'skills') return decName('skills', id);
+    if (name === 'enemies') return decName('enemies', id);
+    return '';
   }
+  function tableRowName(name, id) { const n = recordName(name, id); return n ? `${id} — ${n}` : `${id}`; }
 
   function renderTable(name) {
     const host = $('#isoView'); host.innerHTML = '';
@@ -299,7 +304,7 @@
     const sel = document.createElement('div'); sel.className = 'row';
     sel.innerHTML = `<div style="flex:1;min-width:220px"><label>${name} record</label>
       <select id="isoTblSel">${Array.from({ length: t.count }, (_, i) => `<option value="${i}"${i === D.tableId ? ' selected' : ''}>${escapeHtml(tableRowName(name, i))}</option>`).join('')}</select></div>
-      <div class="muted" style="align-self:end">@0x${(t.base + D.tableId * t.stride).toString(16).toUpperCase()} · stride 0x${t.stride.toString(16).toUpperCase()}</div>`;
+      <div class="muted" style="align-self:end">${recordName(name, D.tableId) ? escapeHtml(recordName(name, D.tableId)) + ' · ' : ''}@0x${(t.base + D.tableId * t.stride).toString(16).toUpperCase()} · stride 0x${t.stride.toString(16).toUpperCase()}</div>`;
     host.appendChild(sel);
     sel.querySelector('#isoTblSel').onchange = (e) => { D.tableId = +e.target.value; renderTable(name); };
 
@@ -308,21 +313,25 @@
     host.appendChild(grid(t.fields.map((f) => numControl(recOff + f.off, f.w, grp, f.label, 0, (1 << (8 * f.w)) - 1))));
   }
 
-  function refTable(title, map, keyHex) {
-    const rows = Object.keys(map).sort((a, b) => parseInt(a, 16) - parseInt(b, 16))
-      .map((k) => `<tr><td>0x${k}</td><td>${escapeHtml(map[k])}</td></tr>`).join('');
-    return `<details open><summary style="color:var(--gold);cursor:pointer;font-weight:600">${title} (${Object.keys(map).length})</summary>
+  // hexKeys: keys are hex (runes/weapon/orbs) → show 0xNN; else decimal id.
+  function refTable(title, map, hexKeys) {
+    const radix = hexKeys ? 16 : 10;
+    const rows = Object.keys(map).sort((a, b) => parseInt(a, radix) - parseInt(b, radix))
+      .map((k) => `<tr><td>${hexKeys ? '0x' + k : parseInt(k, 10)}</td><td>${escapeHtml(map[k])}</td></tr>`).join('');
+    return `<details><summary style="color:var(--gold);cursor:pointer;font-weight:600">${title} (${Object.keys(map).length})</summary>
       <table style="margin-top:6px"><thead><tr><th>ID</th><th>Name</th></tr></thead><tbody>${rows}</tbody></table></details>`;
   }
   function renderReference() {
     const host = $('#isoView'); host.innerHTML = '<small class="muted">Read-only id → name lists used while editing.</small>';
     const wrap = document.createElement('div');
     wrap.innerHTML =
-      refTable('Runes', D.maps.runes) +
-      refTable('Weapon types', D.maps.weapon_types) +
-      refTable('Rune orbs', D.maps.rune_orbs) +
-      refTable('Skills', D.maps.skills) +
-      refTable('Enemies', D.maps.enemies);
+      refTable('Items', D.itemNames, false) +
+      refTable('Skills', D.maps.skills, false) +
+      refTable('Enemies', D.maps.enemies, false) +
+      refTable('Runes', D.maps.runes, true) +
+      refTable('Weapon types', D.maps.weapon_types, true) +
+      refTable('Rune orbs', D.maps.rune_orbs, true) +
+      refTable('Characters', D.maps.character_names, false);
     host.appendChild(wrap);
   }
 
