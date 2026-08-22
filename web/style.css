@@ -63,12 +63,20 @@ h3.sub-h{color:var(--gold);font-size:14px;margin:16px 0 6px}
 .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
 .pill.ok{color:#9be3ae;border-color:var(--ok)}
 .pill.bad{color:#f0a6b1;border-color:#7d1a26}
-/* sticky action toolbar */
-#actionbar{position:sticky;position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;align-items:center;gap:12px;
+/* mode tabs (Save | ISO) */
+#modeTabs{position:sticky;top:0;z-index:4;display:flex;gap:4px;padding:8px 18px 0;background:var(--bg);border-bottom:1px solid var(--line);max-width:1000px;margin:0 auto}
+.modetab{background:transparent;border:1px solid var(--line);border-bottom:none;color:var(--muted);font-weight:600;border-radius:8px 8px 0 0;padding:8px 16px}
+.modetab.active{color:var(--gold);border-color:var(--gold);background:var(--panel)}
+/* ISO view tabs — one swipeable row */
+#isoViewTabs{display:flex;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:6px;margin-bottom:12px;padding-bottom:4px}
+.viewtab{flex:0 0 auto;background:transparent;border:1px solid var(--line);color:var(--ink);font-weight:500;border-radius:999px;padding:6px 14px;white-space:nowrap}
+.viewtab.active{color:#1a1113;background:var(--gold);border-color:var(--gold);font-weight:700}
+/* sticky action toolbars */
+#actionbar,#isoActionbar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;align-items:center;gap:12px;
   padding:10px 18px calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--panel) 94%,#000);
   border-top:1px solid var(--gold)}
-#actionbar #applyBtn{padding:9px 16px}
-#applyBtn.has-dirty{box-shadow:0 0 0 2px var(--chg)}
+#actionbar #applyBtn,#isoActionbar #isoApplyBtn{padding:9px 16px}
+#applyBtn.has-dirty,#isoApplyBtn.has-dirty{box-shadow:0 0 0 2px var(--chg)}
 .muted{color:var(--muted);font-size:12px}
 /* modals / sheets */
 .modal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom))}

@@ -1,0 +1,425 @@
+{
+ "record_len": 640,
+ "growth_ranks": {
+  "1": "F",
+  "2": "E",
+  "3": "D",
+  "4": "C",
+  "5": "B",
+  "6": "A",
+  "7": "S",
+  "8": "SS",
+  "9": "C (special)",
+  "10": "B~S (special)",
+  "11": "S (special)",
+  "12": "SS+ (special)"
+ },
+ "elements": {
+  "0": "None",
+  "1": "Fire",
+  "2": "Cyclone (Wind)",
+  "3": "Earth",
+  "4": "Lightning",
+  "5": "Water"
+ },
+ "weapon_growth": {
+  "offset": 12,
+  "levels": 8
+ },
+ "skill_block": {
+  "offset": 241,
+  "count": 29,
+  "rank_max": 7
+ },
+ "fields": [
+  {
+   "key": "move",
+   "label": "Move",
+   "offset": 0,
+   "kind": "u8",
+   "w": 1
+  },
+  {
+   "key": "unknown_01",
+   "label": "Unknown",
+   "offset": 1,
+   "kind": "u8",
+   "w": 1
+  },
+  {
+   "key": "hp_growth",
+   "label": "HP Growth",
+   "offset": 2,
+   "kind": "rank",
+   "w": 1
+  },
+  {
+   "key": "str_growth",
+   "label": "STR Growth",
+   "offset": 3,
+   "kind": "rank",
+   "w": 1
+  },
+  {
+   "key": "skl_growth",
+   "label": "SKL Growth",
+   "offset": 4,
+   "kind": "rank",
+   "w": 1
+  },
+  {
+   "key": "mag_growth",
+   "label": "MAG Growth",
+   "offset": 5,
+   "kind": "rank",
+   "w": 1
+  },
+  {
+   "key": "eva_growth",
+   "label": "EVA Growth",
+   "offset": 6,
+   "kind": "rank",
+   "w": 1
+  },
+  {
+   "key": "pdf_growth",
+   "label": "PDF Growth",
+   "offset": 7,
+   "kind": "rank",
+   "w": 1
+  },
+  {
+   "key": "mdf_growth",
+   "label": "MDF Growth",
+   "offset": 8,
+   "kind": "rank",
+   "w": 1
+  },
+  {
+   "key": "spd_growth",
+   "label": "SPD Growth",
+   "offset": 9,
+   "kind": "rank",
+   "w": 1
+  },
+  {
+   "key": "luck_growth",
+   "label": "LUCK Growth",
+   "offset": 10,
+   "kind": "rank",
+   "w": 1
+  },
+  {
+   "key": "weapon_type",
+   "label": "Weapon Type",
+   "offset": 11,
+   "kind": "enum",
+   "w": 1,
+   "data": "weapon_types"
+  },
+  {
+   "key": "rune_head",
+   "label": "Head Rune",
+   "offset": 88,
+   "kind": "enum",
+   "w": 1,
+   "data": "runes"
+  },
+  {
+   "key": "rune_right",
+   "label": "Right Rune",
+   "offset": 90,
+   "kind": "enum",
+   "w": 1,
+   "data": "runes"
+  },
+  {
+   "key": "rune_left",
+   "label": "Left Rune",
+   "offset": 92,
+   "kind": "enum",
+   "w": 1,
+   "data": "runes"
+  },
+  {
+   "key": "u16_2A",
+   "label": "u16 @0x2A",
+   "offset": 42,
+   "kind": "u16",
+   "w": 2
+  },
+  {
+   "key": "u16_2E",
+   "label": "u16 @0x2E",
+   "offset": 46,
+   "kind": "u16",
+   "w": 2
+  },
+  {
+   "key": "u16_32",
+   "label": "u16 @0x32",
+   "offset": 50,
+   "kind": "u16",
+   "w": 2
+  },
+  {
+   "key": "u16_36",
+   "label": "u16 @0x36",
+   "offset": 54,
+   "kind": "u16",
+   "w": 2
+  },
+  {
+   "key": "u16_3A",
+   "label": "u16 @0x3A",
+   "offset": 58,
+   "kind": "u16",
+   "w": 2
+  },
+  {
+   "key": "u16_3E",
+   "label": "u16 @0x3E",
+   "offset": 62,
+   "kind": "u16",
+   "w": 2
+  },
+  {
+   "key": "u16_42",
+   "label": "u16 @0x42",
+   "offset": 66,
+   "kind": "u16",
+   "w": 2
+  },
+  {
+   "key": "u16_46",
+   "label": "u16 @0x46",
+   "offset": 70,
+   "kind": "u16",
+   "w": 2
+  },
+  {
+   "key": "u16_4A",
+   "label": "u16 @0x4A",
+   "offset": 74,
+   "kind": "u16",
+   "w": 2
+  },
+  {
+   "key": "u16_4E",
+   "label": "u16 @0x4E",
+   "offset": 78,
+   "kind": "u16",
+   "w": 2
+  },
+  {
+   "key": "element",
+   "label": "Innate Element",
+   "offset": 94,
+   "kind": "element",
+   "w": 1
+  },
+  {
+   "key": "skill_01",
+   "label": "Skill: Counter Attack",
+   "offset": 241,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_02",
+   "label": "Skill: Parry",
+   "offset": 242,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_03",
+   "label": "Skill: Cross Counter",
+   "offset": 243,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_04",
+   "label": "Skill: Deflect Missiles",
+   "offset": 244,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_05",
+   "label": "Skill: Smash",
+   "offset": 245,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_06",
+   "label": "Skill: Sniper",
+   "offset": 246,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_07",
+   "label": "Skill: Battle Lust",
+   "offset": 247,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_08",
+   "label": "Skill: Shield Defense",
+   "offset": 248,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_09",
+   "label": "Skill: Armor Defense",
+   "offset": 249,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_10",
+   "label": "Skill: Skill Rune Mastery",
+   "offset": 250,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_11",
+   "label": "Skill: Fire Magic",
+   "offset": 251,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_12",
+   "label": "Skill: Water Magic",
+   "offset": 252,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_13",
+   "label": "Skill: Wind Magic",
+   "offset": 253,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_14",
+   "label": "Skill: Lightning Magic",
+   "offset": 254,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_15",
+   "label": "Skill: Earth Magic",
+   "offset": 255,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_16",
+   "label": "Skill: Shield Magic",
+   "offset": 256,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_17",
+   "label": "Skill: Punishment Magic",
+   "offset": 257,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_18",
+   "label": "Skill: Concentration",
+   "offset": 258,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_19",
+   "label": "Skill: Magic Rune Mastery",
+   "offset": 259,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_20",
+   "label": "Skill: Bull's Eye",
+   "offset": 260,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_21",
+   "label": "Skill: Dodge",
+   "offset": 261,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_22",
+   "label": "Skill: Critical Hit",
+   "offset": 262,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_23",
+   "label": "Skill: Mind's Eye",
+   "offset": 263,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_24",
+   "label": "Skill: Hidden Power",
+   "offset": 264,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_25",
+   "label": "Skill: Extra Move",
+   "offset": 265,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_26",
+   "label": "Skill: Godspeed",
+   "offset": 266,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_27",
+   "label": "Skill: Jump",
+   "offset": 267,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_28",
+   "label": "Skill: Guard",
+   "offset": 268,
+   "kind": "skillrank",
+   "w": 1
+  },
+  {
+   "key": "skill_29",
+   "label": "Skill: Narcissim",
+   "offset": 269,
+   "kind": "skillrank",
+   "w": 1
+  }
+ ]
+}

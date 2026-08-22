@@ -9,13 +9,14 @@
  * Bump CACHE when any precached shell file changes to invalidate old caches.
  * Never purge SHARE_CACHE — it may hold a pending shared-in file.
  */
-const CACHE = 'st-save-editor-v2';
+const CACHE = 'st-save-editor-v3';
 const SHARE_CACHE = 'st-share';
 
 const SHELL = [
   './',
   './index.html',
   './app.js',
+  './iso.js',
   './style.css',
   './st_glue.py',
   './manifest.webmanifest',
@@ -28,6 +29,15 @@ const SHELL = [
   '../st-editor/data/st_ram_party_map.json',
   '../st-editor/data/st_shop_items.json',
   '../st-editor/data/st_runes.json',
+  // ISO editor data
+  '../st-editor/data/st_characters.json',
+  '../st-editor/data/st_tables.json',
+  '../st-editor/data/st_char_schema.json',
+  '../st-editor/data/st_weapon_types.json',
+  '../st-editor/data/st_rune_orbs.json',
+  '../st-editor/data/st_skills.json',
+  '../st-editor/data/st_enemies.json',
+  '../st-editor/data/st_character_names.json',
 ];
 
 self.addEventListener('install', (e) => {

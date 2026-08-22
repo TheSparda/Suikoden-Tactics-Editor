@@ -1,0 +1,83 @@
+#!/usr/bin/env python3
+"""ISO editor engine tests — ships NO game data.
+
+1. Schema-drift guard: the committed data/st_char_schema.json (consumed by the
+   web ISO editor) must exactly match what gen_iso_schema.py produces from
+   stfields.py — so the JS port can't silently drift from the Python offsets.
+2. Patch-engine sanity: build a SPARSE synthetic disc (real offsets, ~0 disk)
+   with the SLUS marker + Kyril fingerprint, then drive the real stpatch
+   ISOEditor read/decode/set at those offsets.
+"""
+import os, sys, json, tempfile
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ST_EDITOR = os.path.normpath(os.path.join(HERE, "..", "..", "st-editor"))
+sys.path.insert(0, ST_EDITOR)
+
+import gen_iso_schema
+import stfields
+import stpatch
+
+PASS, FAIL = [], []
+def ok(cond, label):
+    (PASS if cond else FAIL).append(label); print(("  PASS " if cond else "  FAIL ") + label)
+
+print("=== schema drift ===")
+committed_path = os.path.join(ST_EDITOR, "data", "st_char_schema.json")
+committed = json.load(open(committed_path, encoding="utf-8"))
+fresh = gen_iso_schema.build()
+ok(committed == fresh, "committed st_char_schema.json matches stfields.py (regenerate with gen_iso_schema.py)")
+ok(committed["record_len"] == stfields.RECORD_LEN, "schema record_len = 0x%X" % committed["record_len"])
+ok(all(f["offset"] + f["w"] <= committed["record_len"] for f in committed["fields"]), "all fields fit inside the record")
+
+print("\n=== patch engine on a sparse synthetic disc ===")
+chars = stpatch.load_characters()
+tables = stpatch.load_tables()
+kyril = next(c for c in chars if c["name"].lower() == "kyril")
+
+fd, path = tempfile.mkstemp(suffix=".iso"); os.close(fd)
+try:
+    # size to cover the last editable byte; sparse so it costs ~nothing on disk
+    max_off = max(
+        [c["offset"] + stfields.RECORD_LEN for c in chars if "offset" in c] +
+        [t["base"] + t["count"] * t["stride"] for t in tables.values()]
+    )
+    with open(path, "r+b" if os.path.exists(path) else "w+b") as f:
+        f.truncate(max_off + 0x100)
+        f.seek(0x8000); f.write(stpatch.SLUS_MARKER)                 # region marker
+        f.seek(kyril["offset"] + 0x0B); f.write(bytes([0x0E]))       # fingerprint
+        f.seek(kyril["offset"] + 0x03); f.write(bytes([0x05]))       # STR growth = B
+
+    ed = stpatch.ISOEditor(path)
+    good, m = ed.validate()
+    ok(good, "validate() passes on synthetic disc: %s" % m)
+
+    d = ed.decode_char(kyril)
+    ok(d["weapon_type"]["value"] == 0x0E, "decodes Kyril weapon_type byte")
+    ok(d["str_growth"]["value"] == 0x05, "decodes STR growth = %s" % d["str_growth"]["display"])
+
+    ed.set_field(kyril, "str_growth", 8, backup=False)
+    ok(ed.decode_char(kyril)["str_growth"]["value"] == 8, "set_field STR growth -> SS persists")
+
+    ed.set_weapon_growth(kyril, 1, 0x2A, backup=False)
+    ok(ed.read_record(kyril)[stfields.WEAPON_GROWTH_OFFSET] == 0x2A, "set_weapon_growth Lv1 persists")
+
+    # a generic table (items) round-trips at its real offset
+    name = "items"
+    ed.set_table_field(name, 1, 0x00, 1, 0x37, backup=False)
+    rec = ed.decode_table_record(name, 1)
+    ok(rec["fields"][0]["value"] == 0x37, "table set/read round-trip (items id=1 @+0x00 = 0x37)")
+
+    # out-of-range rejected
+    try:
+        ed.set_field(kyril, "str_growth", 999, backup=False); ok(False, "rejects out-of-range u8")
+    except ValueError:
+        ok(True, "rejects out-of-range u8 write")
+finally:
+    os.remove(path)
+
+print("\n================ SUMMARY ================")
+print("PASS: %d   FAIL: %d" % (len(PASS), len(FAIL)))
+for f in FAIL:
+    print("  - " + f)
+sys.exit(1 if FAIL else 0)

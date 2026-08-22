@@ -1,13 +1,43 @@
-# Suikoden Tactics — Web Save Editor
+# Suikoden Tactics — Web Editor
 
-A browser-based twin of the desktop **Save editor**. Open a *Suikoden Tactics*
-(PS2) memory-card save, edit it, and download the edited save — **100% in your
-browser**. Your file is never uploaded anywhere.
+A browser-based twin of the desktop editor, in two modes — a **Save editor** and
+an **ISO editor** — that run **100% in your browser**. Your files are never
+uploaded anywhere.
 
 **Live:** https://thesparda.github.io/Suikoden-Tactics-Editor/web/
 
-Supports every container the desktop editor does:
+The **Save editor** supports every container the desktop does:
 `.sps` · `.xps` · `.cbs` · `.max` · `.psu` · raw `.ps2` memory-card images.
+
+The **ISO editor** edits a USA *Suikoden Tactics* (SLUS-21245) disc image
+**in place**.
+
+## ISO editor
+
+Edit the disc's character growth ranks, weapon type/growth, runes, innate
+element and 29 battle-skill affinities, plus the item, shop, rune-shop, price,
+skill and enemy tables — the same fields as the desktop ISO editor.
+
+- **Never loads the whole disc.** It reads only the bounded editable region
+  (~0.6 MB across two windows) via the File System Access API `Blob.slice`,
+  edits it in memory, and writes back **only the changed byte-runs** at their
+  absolute offsets (`createWritable({keepExistingData:true})`) — the multi-GB
+  disc is never copied or uploaded.
+- **Version + fingerprint gate:** refuses anything without the `SLUS_212.45`
+  marker and the Kyril character-table fingerprint, so you can't corrupt a
+  PAL/JP disc.
+- **Recipe (`.stmod`):** export your staged edits as a tiny JSON of byte-runs
+  (with original bytes) to share a rebalance without passing around the disc;
+  import replays it, version-checked and warning on any byte that doesn't match
+  the recipe's recorded original.
+- **Desktop-only:** needs the File System Access API (desktop Chrome / Edge /
+  Brave / Opera). On mobile/Firefox/Safari the ISO tab shows a clear "needs
+  desktop" card while the Save editor keeps working everywhere.
+
+Offsets are never guessed: character offsets come from `st_characters.json`,
+table offsets from `st_tables.json`, and the record field schema is generated
+from `stfields.py` into `st_char_schema.json` (regenerate with
+`python3 st-editor/gen_iso_schema.py`) — one source of truth for the JS port.
 
 ## Features
 
@@ -57,18 +87,19 @@ Pyodide runtime (~a few MB) from a CDN; every load after that is cached.
 
 | File | Purpose |
 |---|---|
-| `index.html` | UI shell + PWA meta |
+| `index.html` | UI shell (Save \| ISO mode tabs) + PWA meta |
 | `style.css` | theme (ported from the desktop editor), mobile-first |
-| `app.js` | Pyodide bootstrap, pickers, diff/review, dirty tracking, delivery |
-| `st_glue.py` | thin Python glue that drives the unchanged desktop modules |
+| `app.js` | Save editor: Pyodide bootstrap, pickers, diff/review, delivery |
+| `iso.js` | ISO editor: ranged read, field views, diff-run in-place write, recipes |
+| `st_glue.py` | thin Python glue that drives the unchanged desktop save modules |
 | `manifest.webmanifest`, `sw.js`, `icons/` | PWA / offline / share-target |
-| `tests/` | `validate.mjs` (static), `save_roundtrip.py` (engine), `e2e.mjs` (headless) |
+| `tests/` | `validate.mjs`, `save_roundtrip.py`, `iso_engine.py`, `e2e.mjs` |
 
 ## Tests
 
 ```bash
 cd web
-npm test        # static validation + engine round-trip (skips e2e)
+npm test        # static validation + save & ISO engine round-trips (skips e2e)
 npm run test:all # + headless Chromium e2e (needs Playwright installed)
 ```
 

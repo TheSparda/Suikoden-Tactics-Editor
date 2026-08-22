@@ -1,0 +1,514 @@
+/* Suikoden Tactics — client-side ISO editor.
+ *
+ * A JS port of the desktop ISO editor (stpatch.py / stfields.py). The disc is
+ * multi-GB, so — unlike the Save editor — this does NOT use Pyodide: it reads
+ * only the bounded editable windows via File System Access `Blob.slice`, edits
+ * them in memory, and writes back ONLY the changed byte-runs at their absolute
+ * offsets with `createWritable({keepExistingData:true})`. Nothing is uploaded.
+ *
+ * Offsets are never guessed: character offsets come from st_characters.json,
+ * table offsets from st_tables.json, and the record field schema is generated
+ * from stfields.py into st_char_schema.json (one source of truth).
+ *
+ * Shares helpers ($, $$, clone, escapeHtml, openPicker, idb*) with app.js.
+ */
+'use strict';
+(function () {
+  const EDITOR_BASE = '../st-editor/';
+  const SLUS_MARKER = [0x53, 0x4C, 0x55, 0x53, 0x5F, 0x32, 0x31, 0x32, 0x2E, 0x34, 0x35]; // "SLUS_212.45"
+  const GAME_ID = 'SLUS-21245';
+  const MERGE_GAP = 1 << 20;          // merge editable ranges within 1 MiB into one window
+  const HAS_FS = 'showOpenFilePicker' in window;
+  const RECORD_LEN = 0x280;
+
+  const D = {                          // ISO state
+    handle: null, name: '', chars: [], tables: {}, schema: null, maps: {},
+    itemNames: {}, segs: [], loaded: false, view: 'chars', charIdx: 0, tableId: 0,
+    edits: new Map(),                  // key "abs:w" -> {group,label,oldDisp,newDisp}
+  };
+
+  /* ------------------------------------------------------------ data load - */
+  async function loadJSON(url) { const r = await fetch(url); if (!r.ok) throw new Error('fetch ' + url + ' → ' + r.status); return r.json(); }
+
+  let dataPromise = null;
+  function ensureData() {
+    if (dataPromise) return dataPromise;
+    dataPromise = (async () => {
+      const base = EDITOR_BASE + 'data/';
+      const [chars, tables, schema, weapon_types, runes, rune_orbs, skills, enemies, charNames, itemNames] =
+        await Promise.all([
+          loadJSON(base + 'st_characters.json'), loadJSON(base + 'st_tables.json'),
+          loadJSON(base + 'st_char_schema.json'), loadJSON(base + 'st_weapon_types.json'),
+          loadJSON(base + 'st_runes.json'), loadJSON(base + 'st_rune_orbs.json'),
+          loadJSON(base + 'st_skills.json'), loadJSON(base + 'st_enemies.json'),
+          loadJSON(base + 'st_character_names.json'), loadJSON(base + 'st_shop_items.json'),
+        ]);
+      // disambiguate duplicate character names (adult/child), mirroring stpatch.load_characters
+      const seen = {};
+      chars.forEach((c) => { if (seen[c.name]) { const note = (c.doc_note || '').trim().replace(/[()]/g, '') || 'alt'; c.name = `${c.name} (${note})`; } seen[c.name] = true; });
+      D.chars = chars; D.tables = tables; D.schema = schema; D.itemNames = itemNames;
+      D.maps = { weapon_types, runes, rune_orbs, skills, enemies, character_names: charNames };
+    })();
+    return dataPromise;
+  }
+
+  /* --------------------------------------------------------------- lookups - */
+  const hex2 = (n) => n.toString(16).toUpperCase().padStart(2, '0');
+  const hex4 = (n) => n.toString(16).toUpperCase().padStart(4, '0');
+  function mapLabel(name, val) {
+    const m = D.maps[name] || {};
+    return m[hex2(val)] || m[hex4(val)] || `0x${hex2(val)} (?)`;
+  }
+  function rankLabel(v) { return D.schema.growth_ranks[String(v)] || `0x${hex2(v)} (?)`; }
+  function elemLabel(v) { return D.schema.elements[String(v)] || `0x${hex2(v)} (?)`; }
+  function itemName(id) { return D.itemNames[String(id).padStart(3, '0')] || ''; }
+
+  // picker item lists from a hex-keyed name map
+  function mapPickerList(name) {
+    const m = D.maps[name] || {};
+    return Object.keys(m).map((k) => ({ id: parseInt(k, 16), label: m[k], sub: '0x' + k }))
+      .sort((a, b) => a.id - b.id);
+  }
+
+  /* ---------------------------------------------------------- segment I/O -- */
+  function collectRanges() {
+    const r = [];
+    D.chars.forEach((c) => { if (typeof c.offset === 'number') r.push([c.offset, c.offset + RECORD_LEN]); });
+    Object.values(D.tables).forEach((t) => r.push([t.base, t.base + t.count * t.stride]));
+    return r.sort((a, b) => a[0] - b[0]);
+  }
+  function mergeRanges(ranges) {
+    const out = [];
+    for (const [s, e] of ranges) {
+      const last = out[out.length - 1];
+      if (last && s - last[1] <= MERGE_GAP) last[1] = Math.max(last[1], e);
+      else out.push([s, e]);
+    }
+    return out;
+  }
+  function segFor(abs) { return D.segs.find((s) => abs >= s.base && abs < s.end); }
+  function rd(abs, w) { const s = segFor(abs); if (!s) throw new Error('offset 0x' + abs.toString(16) + ' outside editable region'); let v = 0; for (let i = 0; i < w; i++) v |= s.buf[abs - s.base + i] << (8 * i); return v >>> 0; }
+  function rdOrig(abs, w) { const s = segFor(abs); let v = 0; for (let i = 0; i < w; i++) v |= s.orig[abs - s.base + i] << (8 * i); return v >>> 0; }
+  function wrBytes(abs, bytes) { const s = segFor(abs); for (let i = 0; i < bytes.length; i++) s.buf[abs - s.base + i] = bytes[i] & 0xFF; }
+  function wrVal(abs, w, val) { const b = []; for (let i = 0; i < w; i++) b.push((val >> (8 * i)) & 0xFF); wrBytes(abs, b); }
+
+  /* --------------------------------------------------------------- open ---- */
+  function findMarker(u8) {
+    for (let i = 0; i + SLUS_MARKER.length <= u8.length; i++) {
+      let ok = true; for (let j = 0; j < SLUS_MARKER.length; j++) if (u8[i + j] !== SLUS_MARKER[j]) { ok = false; break; }
+      if (ok) return i;
+    }
+    return -1;
+  }
+
+  async function openISO(handle) {
+    const om = $('#isoOpenMsg');
+    msg(om, 'Reading ISO…', 'info');
+    try {
+      await ensureData();
+      const file = await handle.getFile();
+      // version/region gate — SLUS marker in the first 2 MiB
+      const head = new Uint8Array(await file.slice(0, 2 * 1024 * 1024).arrayBuffer());
+      if (findMarker(head) < 0) {
+        msg(om, `Could not find ${GAME_ID} (SLUS_212.45). This may not be the USA version of Suikoden Tactics.`, 'err');
+        return;
+      }
+      // read only the bounded editable windows
+      const windows = mergeRanges(collectRanges());
+      D.segs = [];
+      for (const [base, end] of windows) {
+        const buf = new Uint8Array(await file.slice(base, end).arrayBuffer());
+        D.segs.push({ base, end, buf, orig: buf.slice() });
+      }
+      // fingerprint — Kyril weapon-type byte must be 0x0E
+      const kyril = D.chars.find((c) => c.name.toLowerCase() === 'kyril');
+      if (kyril) {
+        const wt = rd(kyril.offset + 0x0B, 1);
+        if (wt !== 0x0E) {
+          msg(om, `SLUS marker found, but the character-table fingerprint failed (Kyril weapon byte 0x${hex2(wt)}, expected 0x0E). Offsets don't match this dump.`, 'err');
+          D.segs = []; return;
+        }
+      }
+      D.handle = handle; D.name = file.name; D.loaded = true; D.edits.clear();
+      const totalKB = Math.round(D.segs.reduce((n, s) => n + s.buf.length, 0) / 1024);
+      msg(om, `Opened ${escapeHtml(file.name)} — ${GAME_ID} verified, ${D.segs.length} region(s), ${totalKB} KB mapped.`, 'ok');
+      try { await idbSet('lastISO', { name: file.name, handle }); $('#isoLastName').textContent = file.name; $('#isoLastChip').classList.remove('hide'); } catch (e) {}
+      $('#isoBody').classList.remove('hide');
+      $('#isoActionbar').classList.remove('hide');
+      buildViewTabs();
+      setView(D.view);
+      updateISOBadge();
+    } catch (e) { msg(om, 'Open failed: ' + (e && e.message || e), 'err'); console.error(e); }
+  }
+
+  /* --------------------------------------------------------- edit tracking - */
+  function editKey(abs, w) { return abs + ':' + w; }
+  function reconcileEdit(abs, w, group, label, fmt) {
+    const cur = rd(abs, w), orig = rdOrig(abs, w), k = editKey(abs, w);
+    if (cur === orig) D.edits.delete(k);
+    else D.edits.set(k, { group, label, oldDisp: fmt(orig), newDisp: fmt(cur) });
+    updateISOBadge();
+  }
+  function isoDirtyCount() { return D.edits.size; }
+
+  let isoBadgeRAF = 0;
+  function updateISOBadge() {
+    if (isoBadgeRAF) return;
+    isoBadgeRAF = requestAnimationFrame(() => {
+      isoBadgeRAF = 0;
+      const n = isoDirtyCount();
+      const bs = $('#isoBarStatus'); if (bs) bs.textContent = n ? `${n} unsaved change${n === 1 ? '' : 's'}` : 'No unsaved changes';
+      // reflect in the shared header badge when ISO mode is active
+      if (!$('#isoMode').classList.contains('hide')) {
+        const b = $('#unsaved'); b.textContent = n ? `${n} unsaved` : ''; b.classList.toggle('hide', !n);
+      }
+      $('#isoApplyBtn').classList.toggle('has-dirty', n > 0);
+    });
+  }
+
+  /* ---------------------------------------------------------------- views -- */
+  function buildViewTabs() {
+    const tabs = [
+      ['chars', 'Characters'], ['items', 'Items'], ['shop', 'Shops'], ['runeshop', 'Rune shops'],
+      ['itemprice', 'Prices'], ['skills', 'Skills'], ['enemies', 'Enemies'], ['ref', 'Reference'],
+    ].filter(([k]) => k === 'chars' || k === 'ref' || D.tables[k]);
+    $('#isoViewTabs').innerHTML = tabs.map(([k, l]) =>
+      `<button class="viewtab${k === D.view ? ' active' : ''}" data-view="${k}">${l}</button>`).join('');
+    $$('#isoViewTabs .viewtab').forEach((b) => b.onclick = () => setView(b.dataset.view));
+  }
+  function setView(v) {
+    D.view = v;
+    $$('#isoViewTabs .viewtab').forEach((b) => b.classList.toggle('active', b.dataset.view === v));
+    if (v === 'chars') renderChars();
+    else if (v === 'ref') renderReference();
+    else renderTable(v);
+  }
+
+  // a labeled field control with dirty highlight + revert
+  function fieldRow(label, absOff, w, group, control) { return { label, absOff, w, group, control }; }
+
+  function numControl(abs, w, group, label, min, max, fmt) {
+    const d = document.createElement('div'); d.className = 'fld';
+    const dirty = rd(abs, w) !== rdOrig(abs, w);
+    d.innerHTML = `<label>${escapeHtml(label)}${dirty ? '<button class="revert" title="revert" type="button">↺</button>' : ''}</label>
+      <input type="number" min="${min}" max="${max}" value="${rd(abs, w)}">`;
+    if (dirty) d.classList.add('chg');
+    const inp = d.querySelector('input');
+    inp.oninput = () => {
+      let v = parseInt(inp.value, 10); if (isNaN(v)) v = 0; v = Math.max(min, Math.min(max, v));
+      wrVal(abs, w, v);
+      d.classList.toggle('chg', rd(abs, w) !== rdOrig(abs, w));
+      reconcileEdit(abs, w, group, label, fmt || String);
+    };
+    if (dirty) d.querySelector('.revert').onclick = () => { wrVal(abs, w, rdOrig(abs, w)); reconcileEdit(abs, w, group, label, fmt || String); rerender(); };
+    return d;
+  }
+
+  function selectControl(abs, w, group, label, options, fmt) {
+    const d = document.createElement('div'); d.className = 'fld';
+    const cur = rd(abs, w), dirty = cur !== rdOrig(abs, w);
+    const opts = options.map((o) => `<option value="${o.v}"${o.v === cur ? ' selected' : ''}>${escapeHtml(o.t)}</option>`).join('');
+    d.innerHTML = `<label>${escapeHtml(label)}${dirty ? '<button class="revert" title="revert" type="button">↺</button>' : ''}</label><select>${opts}</select>`;
+    if (dirty) d.classList.add('chg');
+    const sel = d.querySelector('select');
+    sel.onchange = () => { wrVal(abs, w, parseInt(sel.value, 10) || 0); d.classList.toggle('chg', rd(abs, w) !== rdOrig(abs, w)); reconcileEdit(abs, w, group, label, fmt); };
+    if (dirty) d.querySelector('.revert').onclick = () => { wrVal(abs, w, rdOrig(abs, w)); reconcileEdit(abs, w, group, label, fmt); rerender(); };
+    return d;
+  }
+
+  function pickerControl(abs, w, group, label, mapName, fmt) {
+    const d = document.createElement('div'); d.className = 'fld';
+    const cur = rd(abs, w), dirty = cur !== rdOrig(abs, w);
+    d.innerHTML = `<label>${escapeHtml(label)}${dirty ? '<button class="revert" title="revert" type="button">↺</button>' : ''}</label>
+      <button class="pick" type="button">${escapeHtml(fmt(cur))}</button>`;
+    if (dirty) d.classList.add('chg');
+    d.querySelector('.pick').onclick = () => openPicker({
+      title: `${label}`, items: mapPickerList(mapName), current: cur, allowEmpty: true,
+      onPick: (id) => { wrVal(abs, w, id); reconcileEdit(abs, w, group, label, fmt); rerender(); },
+    });
+    if (dirty) d.querySelector('.revert').onclick = () => { wrVal(abs, w, rdOrig(abs, w)); reconcileEdit(abs, w, group, label, fmt); rerender(); };
+    return d;
+  }
+
+  function rerender() { setView(D.view); }
+
+  function grid(children) { const g = document.createElement('div'); g.className = 'grid'; children.forEach((c) => g.appendChild(c)); return g; }
+  function section(title) { const h = document.createElement('h3'); h.className = 'sub-h'; h.textContent = title; return h; }
+
+  function renderChars() {
+    const host = $('#isoView'); host.innerHTML = '';
+    const c = D.chars[D.charIdx];
+    const sel = document.createElement('div'); sel.className = 'row';
+    sel.innerHTML = `<div style="flex:1;min-width:220px"><label>Character</label>
+      <select id="isoCharSel">${D.chars.map((ch, i) => `<option value="${i}"${i === D.charIdx ? ' selected' : ''}>${escapeHtml(ch.name)}</option>`).join('')}</select></div>
+      <div class="muted" style="align-self:end">record @0x${c.offset.toString(16).toUpperCase()}</div>`;
+    host.appendChild(sel);
+    sel.querySelector('#isoCharSel').onchange = (e) => { D.charIdx = +e.target.value; renderChars(); };
+
+    const base = c.offset, F = D.schema.fields;
+    const G = (kind) => F.filter((f) => f.kind === kind);
+    const grp = (name) => 'char:' + c.name + ':' + name;
+
+    // Growth ranks
+    host.appendChild(section('Growth ranks'));
+    const rankOpts = Object.keys(D.schema.growth_ranks).map((k) => ({ v: +k, t: `${rankLabel(+k)} (0x${hex2(+k)})` }));
+    host.appendChild(grid(G('rank').map((f) => selectControl(base + f.offset, f.w, grp('growth'), f.label, rankOpts, rankLabel))));
+
+    // Weapon
+    host.appendChild(section('Weapon'));
+    const wt = F.find((f) => f.key === 'weapon_type');
+    const wchildren = [pickerControl(base + wt.offset, wt.w, grp('weapon'), wt.label, 'weapon_types', (v) => mapLabel('weapon_types', v))];
+    const wg = D.schema.weapon_growth;
+    for (let lv = 0; lv < wg.levels; lv++) wchildren.push(numControl(base + wg.offset + lv, 1, grp('weapon'), `Wpn growth Lv${lv + 1}`, 0, 255));
+    host.appendChild(grid(wchildren));
+
+    // Runes + Element
+    host.appendChild(section('Runes & element'));
+    const re = [];
+    F.filter((f) => f.kind === 'enum' && f.data === 'runes').forEach((f) => re.push(pickerControl(base + f.offset, f.w, grp('runes'), f.label, 'runes', (v) => mapLabel('runes', v))));
+    const el = F.find((f) => f.kind === 'element');
+    if (el) re.push(selectControl(base + el.offset, el.w, grp('element'), el.label, Object.keys(D.schema.elements).map((k) => ({ v: +k, t: elemLabel(+k) })), elemLabel));
+    const mv = F.find((f) => f.key === 'move'); if (mv) re.push(numControl(base + mv.offset, 1, grp('misc'), mv.label, 0, 255));
+    host.appendChild(grid(re));
+
+    // Skills (0..rank_max)
+    host.appendChild(section('Battle skill affinities (0 = off)'));
+    host.appendChild(grid(G('skillrank').map((f) => numControl(base + f.offset, f.w, grp('skills'), f.label, 0, D.schema.skill_block.rank_max))));
+
+    // Extra u16 (unconfirmed) — collapsible
+    const extras = G('u16');
+    if (extras.length) {
+      const det = document.createElement('details'); det.style.marginTop = '12px';
+      det.innerHTML = `<summary style="color:var(--muted);cursor:pointer">Advanced: unconfirmed u16 fields (${extras.length})</summary>`;
+      det.appendChild(grid(extras.map((f) => numControl(base + f.offset, f.w, grp('extra'), f.label, 0, 65535))));
+      host.appendChild(det);
+    }
+  }
+
+  function tableRowName(name, id) {
+    if (name === 'items' || name === 'itemprice') { const n = itemName(id); return n ? `${id} — ${n}` : `${id}`; }
+    if (name === 'skills') { const n = mapLabel('skills', id); return n.includes('?') ? `${id}` : `${id} — ${n}`; }
+    if (name === 'enemies') { const n = mapLabel('enemies', id); return n.includes('?') ? `${id}` : `${id} — ${n}`; }
+    return `${id}`;
+  }
+
+  function renderTable(name) {
+    const host = $('#isoView'); host.innerHTML = '';
+    const t = D.tables[name]; if (!t) { host.textContent = 'No such table.'; return; }
+    if (D.tableId >= t.count) D.tableId = 0;
+    const sel = document.createElement('div'); sel.className = 'row';
+    sel.innerHTML = `<div style="flex:1;min-width:220px"><label>${name} record</label>
+      <select id="isoTblSel">${Array.from({ length: t.count }, (_, i) => `<option value="${i}"${i === D.tableId ? ' selected' : ''}>${escapeHtml(tableRowName(name, i))}</option>`).join('')}</select></div>
+      <div class="muted" style="align-self:end">@0x${(t.base + D.tableId * t.stride).toString(16).toUpperCase()} · stride 0x${t.stride.toString(16).toUpperCase()}</div>`;
+    host.appendChild(sel);
+    sel.querySelector('#isoTblSel').onchange = (e) => { D.tableId = +e.target.value; renderTable(name); };
+
+    const recOff = t.base + D.tableId * t.stride;
+    const grp = `table:${name}:${D.tableId}`;
+    host.appendChild(grid(t.fields.map((f) => numControl(recOff + f.off, f.w, grp, f.label, 0, (1 << (8 * f.w)) - 1))));
+  }
+
+  function refTable(title, map, keyHex) {
+    const rows = Object.keys(map).sort((a, b) => parseInt(a, 16) - parseInt(b, 16))
+      .map((k) => `<tr><td>0x${k}</td><td>${escapeHtml(map[k])}</td></tr>`).join('');
+    return `<details open><summary style="color:var(--gold);cursor:pointer;font-weight:600">${title} (${Object.keys(map).length})</summary>
+      <table style="margin-top:6px"><thead><tr><th>ID</th><th>Name</th></tr></thead><tbody>${rows}</tbody></table></details>`;
+  }
+  function renderReference() {
+    const host = $('#isoView'); host.innerHTML = '<small class="muted">Read-only id → name lists used while editing.</small>';
+    const wrap = document.createElement('div');
+    wrap.innerHTML =
+      refTable('Runes', D.maps.runes) +
+      refTable('Weapon types', D.maps.weapon_types) +
+      refTable('Rune orbs', D.maps.rune_orbs) +
+      refTable('Skills', D.maps.skills) +
+      refTable('Enemies', D.maps.enemies);
+    host.appendChild(wrap);
+  }
+
+  /* ------------------------------------------------------- diff / write ---- */
+  function diffRuns() {
+    const runs = [];
+    for (const s of D.segs) {
+      let i = 0;
+      while (i < s.buf.length) {
+        if (s.buf[i] !== s.orig[i]) { let j = i; while (j < s.buf.length && s.buf[j] !== s.orig[j]) j++; runs.push({ abs: s.base + i, cur: s.buf.slice(i, j), old: s.orig.slice(i, j) }); i = j; }
+        else i++;
+      }
+    }
+    return runs;
+  }
+
+  function openISOReview() {
+    if (!D.loaded) return;
+    if (!D.edits.size) { msg($('#isoOpenMsg'), 'No ISO changes to save.', 'info'); return; }
+    const groups = {};
+    for (const e of D.edits.values()) { (groups[e.group] = groups[e.group] || []).push(e); }
+    let html = '';
+    for (const g of Object.keys(groups)) {
+      const title = g.replace(/^char:/, '').replace(/^table:/, '').replace(/:/g, ' · ');
+      html += `<h4>${escapeHtml(title)}</h4><table class="rev">` +
+        groups[g].map((e) => `<tr><td>${escapeHtml(e.label)}</td><td class="old">${escapeHtml(e.oldDisp)}</td><td class="arrow">→</td><td class="new">${escapeHtml(e.newDisp)}</td></tr>`).join('') + '</table>';
+    }
+    const bytes = diffRuns().reduce((n, r) => n + r.cur.length, 0);
+    $('#isoReviewBody').innerHTML = html + `<p class="muted">${D.edits.size} field(s), ${bytes} byte(s) will be written to <b>${escapeHtml(D.name)}</b>.</p>`;
+    $('#isoReviewModal').classList.remove('hide');
+  }
+  function closeISOReview() { $('#isoReviewModal').classList.add('hide'); }
+
+  function isoProgress(pct, m) { $('#isoProgBar').style.width = Math.max(0, Math.min(100, pct)) + '%'; if (m) $('#isoProgMsg').textContent = m; }
+
+  async function saveISO() {
+    closeISOReview();
+    const runs = diffRuns();
+    if (!runs.length) return;
+    $('#isoProgTitle').textContent = 'Saving to ISO…';
+    $('#isoProgress').classList.remove('hide'); isoProgress(0, 'Requesting write permission…');
+    try {
+      const perm = D.handle.requestPermission ? await D.handle.requestPermission({ mode: 'readwrite' }) : 'granted';
+      if (perm !== 'granted') throw new Error('write permission denied');
+      const w = await D.handle.createWritable({ keepExistingData: true });
+      for (let i = 0; i < runs.length; i++) {
+        await w.write({ type: 'write', position: runs[i].abs, data: runs[i].cur });
+        isoProgress(Math.round(((i + 1) / runs.length) * 100), `Writing run ${i + 1}/${runs.length}…`);
+      }
+      isoProgress(100, 'Finalizing…');
+      await w.close();
+      D.segs.forEach((s) => { s.orig = s.buf.slice(); });
+      D.edits.clear(); updateISOBadge(); rerender();
+      $('#isoProgress').classList.add('hide');
+      msg($('#isoOpenMsg'), `Saved ${runs.length} change-run(s) to ${escapeHtml(D.name)}.`, 'ok');
+    } catch (e) {
+      $('#isoProgress').classList.add('hide');
+      msg($('#isoOpenMsg'), 'Save failed: ' + (e && e.message || e), 'err'); console.error(e);
+    }
+  }
+
+  /* -------------------------------------------------------------- recipe --- */
+  const toHex = (u8) => [...u8].map((b) => b.toString(16).padStart(2, '0')).join('');
+  const fromHex = (h) => new Uint8Array(h.match(/.{2}/g).map((x) => parseInt(x, 16)));
+
+  function exportRecipe() {
+    const runs = diffRuns();
+    if (!runs.length) { msg($('#isoOpenMsg'), 'No changes to export.', 'info'); return; }
+    const recipe = { format: 'stmod', version: 1, game: GAME_ID, patchCount: runs.length,
+      patches: runs.map((r) => ({ off: r.abs, old: toHex(r.old), new: toHex(r.cur) })) };
+    const blob = new Blob([JSON.stringify(recipe, null, 1)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a');
+    const stem = D.name.replace(/\.[^.]+$/, '') || 'suikoden-tactics';
+    a.href = url; a.download = `${stem}.stmod`; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    msg($('#isoOpenMsg'), `Exported recipe (${runs.length} patch-run(s)).`, 'ok');
+  }
+
+  async function importRecipe(file) {
+    if (!D.loaded) { msg($('#isoOpenMsg'), 'Open an ISO first, then import a recipe onto it.', 'err'); return; }
+    let recipe;
+    try { recipe = JSON.parse(await file.text()); } catch (e) { msg($('#isoOpenMsg'), 'Not a valid recipe file.', 'err'); return; }
+    if (recipe.format !== 'stmod') { msg($('#isoOpenMsg'), 'Not an .stmod recipe.', 'err'); return; }
+    if (recipe.game && recipe.game !== GAME_ID) { msg($('#isoOpenMsg'), `Recipe is for ${recipe.game}, not ${GAME_ID}.`, 'err'); return; }
+    let applied = 0, mismatch = 0, outside = 0;
+    for (const p of recipe.patches || []) {
+      const cur = fromHex(p.new), old = p.old ? fromHex(p.old) : null;
+      if (!segFor(p.off) || !segFor(p.off + cur.length - 1)) { outside++; continue; }
+      if (old) { for (let i = 0; i < old.length; i++) if (rd(p.off + i, 1) !== old[i]) { mismatch++; break; } }
+      wrBytes(p.off, cur); applied++;
+    }
+    // rebuild the edit log from the new buf vs orig so review/badge reflect it
+    rebuildEditsFromBuf();
+    rerender(); updateISOBadge();
+    let m = `Imported ${applied} patch-run(s).`;
+    if (mismatch) m += ` ⚠ ${mismatch} did not match the recipe's recorded original bytes (wrong revision?).`;
+    if (outside) m += ` ${outside} fell outside the editable region and were skipped.`;
+    msg($('#isoOpenMsg'), m, mismatch ? 'err' : 'ok');
+  }
+
+  // After a recipe import, reconstruct the labeled edit log by re-decoding known
+  // fields whose current bytes differ from orig (so review + badge are populated).
+  function rebuildEditsFromBuf() {
+    D.edits.clear();
+    // characters
+    D.chars.forEach((c) => {
+      const base = c.offset, grp = 'char:' + c.name + ':import';
+      D.schema.fields.forEach((f) => {
+        const abs = base + f.offset;
+        if (!segFor(abs)) return;
+        if (rd(abs, f.w) !== rdOrig(abs, f.w)) D.edits.set(editKey(abs, f.w), { group: grp, label: f.label, oldDisp: String(rdOrig(abs, f.w)), newDisp: String(rd(abs, f.w)) });
+      });
+    });
+    // tables
+    Object.keys(D.tables).forEach((name) => {
+      const t = D.tables[name];
+      for (let id = 0; id < t.count; id++) {
+        const recOff = t.base + id * t.stride, grp = `table:${name}:${id}`;
+        t.fields.forEach((f) => {
+          const abs = recOff + f.off;
+          if (!segFor(abs)) return;
+          if (rd(abs, f.w) !== rdOrig(abs, f.w)) D.edits.set(editKey(abs, f.w), { group: grp, label: f.label, oldDisp: String(rdOrig(abs, f.w)), newDisp: String(rd(abs, f.w)) });
+        });
+      }
+    });
+  }
+
+  /* ----------------------------------------------------------------- init -- */
+  function switchMode(mode) {
+    const iso = mode === 'iso';
+    $('#saveMode').classList.toggle('hide', iso);
+    $('#isoMode').classList.toggle('hide', !iso);
+    $$('#modeTabs .modetab').forEach((b) => b.classList.toggle('active', b.dataset.mode === mode));
+    // action bars
+    $('#actionbar').classList.toggle('hide', iso || $('#body').classList.contains('hide'));
+    $('#isoActionbar').classList.toggle('hide', !iso || !D.loaded);
+    // header badge reflects the active mode
+    if (iso) updateISOBadge();
+    else if (typeof updateBadge === 'function') updateBadge();
+    if (iso && !HAS_FS) { $('#isoBlocked').classList.remove('hide'); $('#isoLoader').classList.add('hide'); }
+  }
+
+  function initISO() {
+    // mode tabs
+    $$('#modeTabs .modetab').forEach((b) => b.onclick = () => switchMode(b.dataset.mode));
+
+    if (!HAS_FS) {
+      $('#isoBlocked').classList.remove('hide');
+      $('#isoLoader').classList.add('hide');
+    } else {
+      $('#isoOpenBtn').onclick = async () => {
+        try {
+          await ensureData();
+          const [h] = await showOpenFilePicker({ types: [{ description: 'PS2 disc image', accept: { 'application/octet-stream': ['.iso', '.bin', '.img'] } }] });
+          await openISO(h);
+        } catch (e) { if (e && e.name !== 'AbortError') { msg($('#isoOpenMsg'), 'Could not open: ' + (e.message || e), 'err'); console.error(e); } }
+      };
+      // last-ISO chip (handle only — never the multi-GB bytes)
+      idbGet('lastISO').then((last) => { if (last && last.name) { $('#isoLastName').textContent = last.name; $('#isoLastChip').classList.remove('hide'); } });
+      $('#isoLastOpen').onclick = async () => {
+        const last = await idbGet('lastISO'); if (!last || !last.handle) return;
+        try {
+          const perm = last.handle.queryPermission ? await last.handle.queryPermission({ mode: 'readwrite' }) : 'granted';
+          if (perm !== 'granted' && last.handle.requestPermission) await last.handle.requestPermission({ mode: 'readwrite' });
+          await ensureData(); await openISO(last.handle);
+        } catch (e) { msg($('#isoOpenMsg'), 'Could not reopen: ' + (e.message || e), 'err'); }
+      };
+      $('#isoLastForget').onclick = async (e) => { e.stopPropagation(); await idbDel('lastISO'); $('#isoLastChip').classList.add('hide'); };
+    }
+
+    $('#isoApplyBtn').onclick = openISOReview;
+    $('#isoReviewCancel').onclick = closeISOReview;
+    $('#isoReviewCancel2').onclick = closeISOReview;
+    $('#isoReviewConfirm').onclick = saveISO;
+    $('#isoReviewModal').addEventListener('click', (e) => { if (e.target.id === 'isoReviewModal') closeISOReview(); });
+    $('#isoRecipeExport').onclick = exportRecipe;
+    $('#isoRecipeImport').onclick = () => $('#isoRecipeFile').click();
+    $('#isoRecipeFile').onchange = () => { if ($('#isoRecipeFile').files[0]) importRecipe($('#isoRecipeFile').files[0]); $('#isoRecipeFile').value = ''; };
+
+    // unsaved guard for ISO edits
+    window.addEventListener('beforeunload', (e) => { if (D.loaded && isoDirtyCount() > 0) { e.preventDefault(); e.returnValue = ''; } });
+
+    // prefetch data tables in the background so the first open is instant
+    ensureData().catch(() => {});
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initISO);
+  else initISO();
+})();

@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta id="themeColor" name="theme-color" content="#1a1113">
-<meta name="description" content="Edit Suikoden Tactics (PS2) memory-card saves in your browser. 100% client-side — your save never leaves your device.">
-<title>Suikoden Tactics — Save Editor</title>
+<meta name="description" content="Edit Suikoden Tactics (PS2) saves and ISOs in your browser. 100% client-side — nothing is uploaded.">
+<title>Suikoden Tactics — Editor</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -23,7 +23,7 @@
 </div>
 
 <header>
- <h1>Suikoden Tactics — Save Editor</h1>
+ <h1>Suikoden Tactics — Editor</h1>
  <span class="sub">USA · PAL &nbsp;|&nbsp; 100% in your browser — nothing is uploaded</span>
  <span class="spacer"></span>
  <span id="unsaved" class="badge hide"></span>
@@ -31,7 +31,14 @@
  <button class="ghost" id="themeBtn">Theme</button>
 </header>
 
+<nav id="modeTabs">
+ <button class="modetab active" data-mode="save">Save editor</button>
+ <button class="modetab" data-mode="iso">ISO editor</button>
+</nav>
+
 <main>
+ <!-- ============================ SAVE MODE ============================ -->
+ <div id="saveMode">
  <div class="card">
   <small>Open any Suikoden Tactics save container (<b>.sps / .xps / .cbs / .max / .psu</b>)
   or a raw PS2 memory-card image (<b>.ps2</b>). Party stats, equipment, runes, magic
@@ -55,7 +62,6 @@
  </div>
 
  <div id="body" class="hide">
-  <!-- card folder switcher -->
   <div class="card hide" id="cardSwitchCard">
    <div class="sechead"><h2>Memory card</h2></div>
    <small>This card image holds more than one Suikoden Tactics save folder. Pick which one to edit.</small>
@@ -70,7 +76,6 @@
     <div><label>Gold (potch)</label><input id="gold" type="number" min="0" max="9999999" style="width:150px"></div>
     <div><label>Skill points</label><input id="sp" type="number" min="0" max="9999999" style="width:150px"></div>
    </div>
-
    <h3 class="sub-h">S4 Save Data</h3>
    <div class="row" style="align-items:flex-end">
     <div><label title="Suikoden IV import bonus: unlocks Lazlo + Snowe (their Have-Character flags)">Save data imported</label><br><input id="import" type="checkbox" style="width:22px;height:22px"></div>
@@ -78,7 +83,7 @@
    </div>
    <div style="font-size:11px;color:var(--muted);margin:6px 0 0;max-width:660px">
     <b>Save data imported</b> enables the Suikoden IV bonus — it unlocks both imported units, <b>Lazlo</b> and <b>Snowe</b>.
-    The <b>hero name</b> is the S4 hero's name stored on the save. Note: Tactics renders it with a space between every
+    The <b>hero name</b> is the S4 hero's name stored on the save. Tactics renders it with a space between every
     letter (<i>"L a z l o"</i>) — a game-side display bug that editing the name can't fix.
    </div>
   </div>
@@ -141,18 +146,62 @@
     This page runs the desktop editor's Python save code unchanged inside
     <a href="https://pyodide.org" target="_blank" rel="noopener">Pyodide</a> (CPython compiled to WebAssembly).
     Your save is read into an in-memory filesystem, edited, and read back out for download — it is
-    never sent to any server. Add this page to your Android home screen (browser menu → <i>Install app</i> /
-    <i>Add to Home screen</i>) to use it offline. Always keep a backup of your original save.
+    never sent to any server. Add this page to your Android home screen to use it offline. Always keep a backup.
    </div>
   </details>
  </div>
+ </div><!-- /saveMode -->
+
+ <!-- ============================ ISO MODE ============================= -->
+ <div id="isoMode" class="hide">
+  <!-- capability block (no File System Access) -->
+  <div class="card hide" id="isoBlocked">
+   <h3 class="sub-h" style="margin-top:0">ISO editing needs a desktop browser</h3>
+   <small>The ISO editor edits a multi-GB disc image <b>in place</b>, which needs the
+   <b>File System Access API</b> — available in desktop <b>Chrome / Edge / Brave / Opera</b>.
+   Your current browser doesn't support it (this is normal on mobile and Firefox/Safari).
+   <br><br>The <b>Save editor</b> tab works everywhere, including mobile.</small>
+  </div>
+
+  <div class="card" id="isoLoader">
+   <small>Open your <b>USA Suikoden Tactics (SLUS-21245)</b> disc image (<b>.iso</b>). It's opened
+   <b>in place</b> — only the exact bytes you change are written back; the multi-GB disc is never
+   copied or uploaded. Edits: character growth/runes/element/skills, and the item, shop, rune-shop,
+   price, skill and enemy tables. A <b>version + fingerprint check</b> runs before anything is written.</small>
+   <div class="row" style="margin-top:12px;align-items:center">
+    <button id="isoOpenBtn">Open ISO…</button>
+    <span id="isoLastChip" class="chip hide" title="Reopen your last ISO">
+     <button id="isoLastOpen" class="linklike">↻ Last ISO: <b id="isoLastName"></b></button>
+     <button id="isoLastForget" class="x" title="Forget">✕</button>
+    </span>
+   </div>
+   <div id="isoOpenMsg" class="msg"></div>
+   <div class="row" style="margin-top:8px">
+    <button class="ghost" id="isoRecipeImport">Import recipe (.stmod)…</button>
+    <input id="isoRecipeFile" type="file" accept=".stmod,.json,application/json" style="display:none">
+   </div>
+  </div>
+
+  <div id="isoBody" class="hide">
+   <nav id="isoViewTabs"></nav>
+   <div class="card" id="isoView"></div>
+  </div>
+ </div><!-- /isoMode -->
 </main>
 
-<!-- sticky action toolbar -->
+<!-- sticky action toolbar (save mode) -->
 <div id="actionbar" class="hide">
  <span id="barStatus" class="muted"></span>
  <span class="spacer"></span>
  <button id="applyBtn">Review &amp; apply…</button>
+</div>
+
+<!-- sticky action toolbar (ISO mode) -->
+<div id="isoActionbar" class="hide">
+ <span id="isoBarStatus" class="muted"></span>
+ <span class="spacer"></span>
+ <button class="ghost" id="isoRecipeExport">Export recipe</button>
+ <button id="isoApplyBtn">Review &amp; save to ISO…</button>
 </div>
 
 <!-- searchable picker modal -->
@@ -164,7 +213,7 @@
  </div>
 </div>
 
-<!-- review-changes modal -->
+<!-- review-changes modal (save mode) -->
 <div id="reviewModal" class="modal hide">
  <div class="sheet">
   <div class="sheethead"><b>Review changes</b><button class="x" id="reviewCancel">✕</button></div>
@@ -176,9 +225,32 @@
  </div>
 </div>
 
+<!-- review-changes modal (ISO mode) -->
+<div id="isoReviewModal" class="modal hide">
+ <div class="sheet">
+  <div class="sheethead"><b>Review ISO changes</b><button class="x" id="isoReviewCancel">✕</button></div>
+  <div id="isoReviewNote" class="msg info" style="display:block">Back up your ISO first, or export a recipe — an ISO write can't be undone.</div>
+  <div id="isoReviewBody" class="reviewbody"></div>
+  <div class="row" style="justify-content:flex-end;margin-top:12px;gap:8px">
+   <button class="ghost" id="isoReviewCancel2">Cancel</button>
+   <button id="isoReviewConfirm">Save to ISO</button>
+  </div>
+ </div>
+</div>
+
+<!-- write-progress modal (ISO mode) -->
+<div id="isoProgress" class="modal hide">
+ <div class="sheet" style="max-width:420px">
+  <div class="sheethead"><b id="isoProgTitle">Writing…</b></div>
+  <div class="bootbar" style="width:100%"><div id="isoProgBar"></div></div>
+  <div id="isoProgMsg" class="muted" style="margin-top:8px"></div>
+ </div>
+</div>
+
 <footer>Made by Sparda · <a href="https://github.com/TheSparda/Suikoden-Tactics-Editor" target="_blank" rel="noopener">github.com/TheSparda/Suikoden-Tactics-Editor</a></footer>
 
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
 <script src="app.js"></script>
+<script src="iso.js"></script>
 </body>
 </html>
