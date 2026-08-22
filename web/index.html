@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1a1113">
+<meta id="themeColor" name="theme-color" content="#1a1113">
 <meta name="description" content="Edit Suikoden Tactics (PS2) memory-card saves in your browser. 100% client-side — your save never leaves your device.">
 <title>Suikoden Tactics — Save Editor</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -16,6 +16,7 @@
 <div id="boot">
  <div class="spin"></div>
  <div id="bootMsg" style="color:var(--gold)">Loading Python runtime…</div>
+ <div class="bootbar"><div id="bootBar"></div></div>
  <div style="color:var(--muted);font-size:12px;max-width:420px;text-align:center">
   First load fetches the CPython (Pyodide) runtime once, then it works offline.
  </div>
@@ -25,6 +26,8 @@
  <h1>Suikoden Tactics — Save Editor</h1>
  <span class="sub">USA · PAL &nbsp;|&nbsp; 100% in your browser — nothing is uploaded</span>
  <span class="spacer"></span>
+ <span id="unsaved" class="badge hide"></span>
+ <button class="ghost hide" id="installBtn">⬇ Install</button>
  <button class="ghost" id="themeBtn">Theme</button>
 </header>
 
@@ -41,6 +44,13 @@
    <small>.sps · .xps · .cbs · .max · .psu · .ps2</small>
   </div>
   <input id="file" type="file" accept=".sps,.xps,.cbs,.max,.psu,.ps2,application/octet-stream" style="display:none">
+  <div class="row" style="margin-top:10px;align-items:center">
+   <button class="ghost hide" id="fsBtn">Open file… (save-in-place)</button>
+   <span id="lastChip" class="chip hide" title="Reopen your last save">
+    <button id="lastOpen" class="linklike">↻ Last opened: <b id="lastName"></b></button>
+    <button id="lastForget" class="x" title="Forget">✕</button>
+   </span>
+  </div>
   <div id="openMsg" class="msg"></div>
  </div>
 
@@ -96,7 +106,7 @@
     <div><label>Show empty slots</label><br><input id="invEmpty" type="checkbox" style="width:22px;height:22px"></div>
    </div>
    <div style="max-height:340px;overflow:auto;margin-top:8px">
-    <table><thead><tr><th>Slot</th><th>Item</th><th>Qty</th></tr></thead><tbody id="invBody"></tbody></table>
+    <table><thead><tr><th>Slot</th><th>Item</th><th>Qty</th><th></th></tr></thead><tbody id="invBody"></tbody></table>
    </div>
    <details style="margin-top:12px">
     <summary style="color:var(--muted);cursor:pointer">Advanced: raw byte edits</summary>
@@ -106,14 +116,18 @@
   </div>
 
   <div class="card">
-   <h3 class="sub-h" style="margin-top:0">Save &amp; download</h3>
+   <h3 class="sub-h" style="margin-top:0">Save &amp; export</h3>
    <div class="row">
     <div><label>Export as</label><select id="target">
      <option value="psu">.psu (mymc / uLaunchELF import)</option>
      <option value="sps">.sps/.xps repack</option>
      <option value="card">inject into card image</option>
     </select></div>
-    <button id="write">Apply edits &amp; download</button>
+    <div><label>Deliver via</label><select id="delivery">
+     <option value="download">Download</option>
+     <option value="file">Save to opened file</option>
+     <option value="share">Share…</option>
+    </select></div>
    </div>
    <small id="targetHint" style="display:block;margin-top:8px"></small>
    <div class="msg secmsg" id="writeMsg"></div>
@@ -133,6 +147,34 @@
   </details>
  </div>
 </main>
+
+<!-- sticky action toolbar -->
+<div id="actionbar" class="hide">
+ <span id="barStatus" class="muted"></span>
+ <span class="spacer"></span>
+ <button id="applyBtn">Review &amp; apply…</button>
+</div>
+
+<!-- searchable picker modal -->
+<div id="pickModal" class="modal hide">
+ <div class="sheet">
+  <div class="sheethead"><b id="pickTitle">Choose</b><button class="x" id="pickClose">✕</button></div>
+  <input id="pickSearch" placeholder="Type a name or id to filter…" autocomplete="off">
+  <div id="pickList" class="picklist"></div>
+ </div>
+</div>
+
+<!-- review-changes modal -->
+<div id="reviewModal" class="modal hide">
+ <div class="sheet">
+  <div class="sheethead"><b>Review changes</b><button class="x" id="reviewCancel">✕</button></div>
+  <div id="reviewBody" class="reviewbody"></div>
+  <div class="row" style="justify-content:flex-end;margin-top:12px;gap:8px">
+   <button class="ghost" id="reviewCancel2">Cancel</button>
+   <button id="reviewConfirm">Apply</button>
+  </div>
+ </div>
+</div>
 
 <footer>Made by Sparda · <a href="https://github.com/TheSparda/Suikoden-Tactics-Editor" target="_blank" rel="noopener">github.com/TheSparda/Suikoden-Tactics-Editor</a></footer>
 
