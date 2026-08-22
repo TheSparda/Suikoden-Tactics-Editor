@@ -269,11 +269,60 @@ def read_psu(d):
     return root, files
 
 
+PS2MC_MAGIC = b"Sony PS2 Memory Card Format "
+ST_DIR_HINTS = ("21245", "53769")   # SLUS-21245 (USA) / SLES-53769 (PAL)
+
+
+def is_ps2_card(path):
+    """True if `path` is a raw PS2 memory-card image (by superblock magic)."""
+    try:
+        with open(path, "rb") as f:
+            return f.read(len(PS2MC_MAGIC)) == PS2MC_MAGIC
+    except OSError:
+        return False
+
+
+def list_ps2_card_saves(path):
+    """List the Suikoden Tactics save folder names on a raw .ps2 card image."""
+    import stsave  # local import: PS2 memory-card reader (also stdlib-only)
+    mc = stsave.PS2MC(path)
+    return [e["name"] for e in mc.root_entries()
+            if e["is_dir"] and any(h in e["name"] for h in ST_DIR_HINTS)]
+
+
+def open_ps2_card(path, folder=None):
+    """Open a raw PS2 memory-card image and return (folder_name, files) — the
+    normalized (dirname, [(name, bytes), ...]) shape used by the other readers —
+    for a Suikoden Tactics save folder on the card (first ST folder by default,
+    or the named `folder`)."""
+    import stsave
+    mc = stsave.PS2MC(path)
+    st = [e for e in mc.root_entries()
+          if e["is_dir"] and any(h in e["name"] for h in ST_DIR_HINTS)]
+    if not st:
+        raise ValueError("no Suikoden Tactics (SLUS-21245 / SLES-53769) save "
+                         "folder on this memory card")
+    ent = next((e for e in st if e["name"] == folder), st[0]) if folder else st[0]
+    files = []
+    for fe in mc.read_dir(ent["cluster"]):
+        if fe["is_dir"] or not fe["exists"]:
+            continue
+        try:
+            files.append((fe["name"], mc.read_file(ent["cluster"], fe["name"])))
+        except Exception:  # skip a corrupt/unreadable entry (e.g. stray dirent)
+            pass
+    if not files:
+        raise ValueError("save folder '%s' on the card is empty or unreadable"
+                         % ent["name"])
+    return ent["name"], files
+
+
 def open_any(path):
     d = open(path, "rb").read()
     if d[:17] == b"\x0d\0\0\0SharkPortSave": return read_sps(d)
     if d[:12] == b"Ps2PowerSave": return read_max(d)
     if d[:4] == b"CFU\0": return read_cbs(d)
+    if d[:len(PS2MC_MAGIC)] == PS2MC_MAGIC: return open_ps2_card(path)
     return read_psu(d)
 
 
