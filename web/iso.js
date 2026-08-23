@@ -403,6 +403,12 @@
       const nd = itemDesc(D.tableId);
       if (nd) { const p = document.createElement('div'); p.className = 'fnote'; p.style.marginBottom = '6px'; p.textContent = nd; host.appendChild(p); }
     }
+    // what the skills values mean (per the V11 editor + Suikoden Tactics guides)
+    if (name === 'skills') {
+      const p = document.createElement('div'); p.className = 'fnote'; p.style.marginBottom = '6px';
+      p.textContent = 'Each skill has ranks E→S. "How strong" = effect strength at that rank (higher = stronger); "secondary" = a second effect some skills add; "upgrade SP cost" = Skill Points needed to raise the skill to that rank.';
+      host.appendChild(p);
+    }
 
     const recOff = t.base + D.tableId * t.stride;
     const grp = `table:${name}:${D.tableId}`;
