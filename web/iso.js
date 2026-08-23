@@ -22,7 +22,7 @@
   const RECORD_LEN = 0x280;
 
   const D = {                          // ISO state
-    handle: null, name: '', chars: [], tables: {}, schema: null, maps: {},
+    handle: null, name: '', fileSize: 0, chars: [], tables: {}, schema: null, maps: {},
     itemNames: {}, segs: [], loaded: false, view: 'chars', charIdx: 0, tableId: 0,
     edits: new Map(),                  // key "abs:w" -> {group,label,oldDisp,newDisp}
   };
@@ -65,11 +65,18 @@
   function elemLabel(v) { return D.schema.elements[String(v)] || `0x${hex2(v)} (?)`; }
   function itemName(id) { return D.itemNames[String(id).padStart(3, '0')] || ''; }
 
-  // picker item lists from a hex-keyed name map
+  // picker item lists from a hex-keyed name map (+ guide note for runes)
   function mapPickerList(name) {
     const m = D.maps[name] || {};
-    return Object.keys(m).map((k) => ({ id: parseInt(k, 16), label: m[k], sub: '0x' + k }))
+    return Object.keys(m).map((k) => ({ id: parseInt(k, 16), label: m[k], sub: '0x' + k,
+      desc: name === 'runes' && typeof runeDesc === 'function' ? runeDesc(parseInt(k, 16)) : '' }))
       .sort((a, b) => a.id - b.id);
+  }
+  // guide note for a value, if the shared reference helpers are loaded
+  function noteFor(kind, val) {
+    if (kind === 'runes' && typeof runeDesc === 'function') return runeDesc(val);
+    if (kind === 'item' && typeof itemDesc === 'function') return itemDesc(val);
+    return '';
   }
 
   /* ---------------------------------------------------------- segment I/O -- */
@@ -91,7 +98,40 @@
   function segFor(abs) { return D.segs.find((s) => abs >= s.base && abs < s.end); }
   function rd(abs, w) { const s = segFor(abs); if (!s) throw new Error('offset 0x' + abs.toString(16) + ' outside editable region'); let v = 0; for (let i = 0; i < w; i++) v |= s.buf[abs - s.base + i] << (8 * i); return v >>> 0; }
   function rdOrig(abs, w) { const s = segFor(abs); let v = 0; for (let i = 0; i < w; i++) v |= s.orig[abs - s.base + i] << (8 * i); return v >>> 0; }
-  function wrBytes(abs, bytes) { const s = segFor(abs); for (let i = 0; i < bytes.length; i++) s.buf[abs - s.base + i] = bytes[i] & 0xFF; }
+
+  /* -------- undo/redo: one write-hook + microtask-committed transaction ----
+   * Every edit path funnels through wrBytes. It records each byte's before-image
+   * into a pending map and schedules a commit on the next microtask, so one user
+   * action = one undo step, with zero per-call-site wrapping. undo/redo restore
+   * bytes directly (bypassing wrBytes) so they don't re-record. */
+  const UNDO = [], REDO = [];
+  let pending = null;
+  function wrBytes(abs, bytes) {
+    const s = segFor(abs); if (!s) return;
+    if (!pending) { pending = new Map(); queueMicrotask(commitPending); }
+    for (let i = 0; i < bytes.length; i++) {
+      const a = abs + i, li = a - s.base;
+      if (!pending.has(a)) pending.set(a, s.buf[li]);
+      s.buf[li] = bytes[i] & 0xFF;
+    }
+  }
+  function commitPending() {
+    if (pending && pending.size) { UNDO.push(pending); REDO.length = 0; if (UNDO.length > 200) UNDO.shift(); updateUndoUI(); }
+    pending = null;
+  }
+  function invertAndApply(step) {           // apply byte map directly, return inverse
+    const inv = new Map();
+    for (const [abs, val] of step) { const s = segFor(abs); if (!s) continue; const li = abs - s.base; inv.set(abs, s.buf[li]); s.buf[li] = val & 0xFF; }
+    return inv;
+  }
+  function undo() { if (!UNDO.length) return; REDO.push(invertAndApply(UNDO.pop())); afterUndoRedo(); }
+  function redo() { if (!REDO.length) return; UNDO.push(invertAndApply(REDO.pop())); afterUndoRedo(); }
+  function afterUndoRedo() { rebuildEditsFromBuf(); rerender(); updateISOBadge(); updateUndoUI(); }
+  function updateUndoUI() {
+    const u = $('#isoUndo'), r = $('#isoRedo');
+    if (u) u.disabled = !UNDO.length;
+    if (r) r.disabled = !REDO.length;
+  }
   function wrVal(abs, w, val) { const b = []; for (let i = 0; i < w; i++) b.push((val >> (8 * i)) & 0xFF); wrBytes(abs, b); }
 
   /* --------------------------------------------------------------- open ---- */
@@ -131,7 +171,8 @@
           D.segs = []; return;
         }
       }
-      D.handle = handle; D.name = file.name; D.loaded = true; D.edits.clear();
+      D.handle = handle; D.name = file.name; D.fileSize = file.size; D.loaded = true; D.edits.clear();
+      UNDO.length = 0; REDO.length = 0; updateUndoUI();
       const totalKB = Math.round(D.segs.reduce((n, s) => n + s.buf.length, 0) / 1024);
       msg(om, `Opened ${escapeHtml(file.name)} — ${GAME_ID} verified, ${D.segs.length} region(s), ${totalKB} KB mapped.`, 'ok');
       try { await idbSet('lastISO', { name: file.name, handle }); $('#isoLastName').textContent = file.name; $('#isoLastChip').classList.remove('hide'); } catch (e) {}
@@ -221,8 +262,9 @@
   function pickerControl(abs, w, group, label, mapName, fmt) {
     const d = document.createElement('div'); d.className = 'fld';
     const cur = rd(abs, w), dirty = cur !== rdOrig(abs, w);
+    const note = noteFor(mapName, cur);
     d.innerHTML = `<label>${escapeHtml(label)}${dirty ? '<button class="revert" title="revert" type="button">↺</button>' : ''}</label>
-      <button class="pick" type="button">${escapeHtml(fmt(cur))}</button>`;
+      <button class="pick" type="button">${escapeHtml(fmt(cur))}</button>${note ? `<div class="fnote">${escapeHtml(note)}</div>` : ''}`;
     if (dirty) d.classList.add('chg');
     d.querySelector('.pick').onclick = () => openPicker({
       title: `${label}`, items: mapPickerList(mapName), current: cur, allowEmpty: true,
@@ -248,6 +290,17 @@
     sel.querySelector('#isoCharSel').onchange = (e) => { D.charIdx = +e.target.value; renderChars(); };
 
     const base = c.offset, F = D.schema.fields;
+
+    // presets — staged like any edit (reviewable + undoable via the write hook)
+    const pbar = document.createElement('div'); pbar.className = 'row'; pbar.style.margin = '8px 0';
+    pbar.innerHTML = `<button class="ghost" data-p="maxgrowth">Max growth (SS)</button>
+      <button class="ghost" data-p="maxskills">Max all skills</button>
+      <button class="ghost" data-p="clearskills">Clear skills</button>`;
+    host.appendChild(pbar);
+    const afterPreset = () => { rebuildEditsFromBuf(); rerender(); updateISOBadge(); };
+    pbar.querySelector('[data-p=maxgrowth]').onclick = () => { F.filter((f) => f.kind === 'rank').forEach((f) => wrVal(base + f.offset, f.w, 0x08)); afterPreset(); };
+    pbar.querySelector('[data-p=maxskills]').onclick = () => { F.filter((f) => f.kind === 'skillrank').forEach((f) => wrVal(base + f.offset, f.w, D.schema.skill_block.rank_max)); afterPreset(); };
+    pbar.querySelector('[data-p=clearskills]').onclick = () => { F.filter((f) => f.kind === 'skillrank').forEach((f) => wrVal(base + f.offset, f.w, 0)); afterPreset(); };
     const G = (kind) => F.filter((f) => f.kind === kind);
     const grp = (name) => 'char:' + c.name + ':' + name;
 
@@ -309,6 +362,12 @@
       <div class="muted" style="align-self:end">${recordName(name, D.tableId) ? escapeHtml(recordName(name, D.tableId)) + ' · ' : ''}@0x${(t.base + D.tableId * t.stride).toString(16).toUpperCase()} · stride 0x${t.stride.toString(16).toUpperCase()}</div>`;
     host.appendChild(sel);
     sel.querySelector('#isoTblSel').onchange = (e) => { D.tableId = +e.target.value; renderTable(name); };
+
+    // guide description for item / price records
+    if ((name === 'items' || name === 'itemprice') && typeof itemDesc === 'function') {
+      const nd = itemDesc(D.tableId);
+      if (nd) { const p = document.createElement('div'); p.className = 'fnote'; p.style.marginBottom = '6px'; p.textContent = nd; host.appendChild(p); }
+    }
 
     const recOff = t.base + D.tableId * t.stride;
     const grp = `table:${name}:${D.tableId}`;
@@ -412,6 +471,21 @@
     msg($('#isoOpenMsg'), `Exported recipe (${runs.length} patch-run(s)).`, 'ok');
   }
 
+  // Export a standard .xdelta (VCDIFF) patch, synthesized from the staged edits
+  // (no full-disc diff). Apply to a PRISTINE disc — a built patch has no checksum.
+  function exportXdelta() {
+    if (typeof VCDIFF === 'undefined') { msg($('#isoOpenMsg'), 'Patch encoder not loaded.', 'err'); return; }
+    const runs = diffRuns();
+    if (!runs.length) { msg($('#isoOpenMsg'), 'No changes to export.', 'info'); return; }
+    const patch = VCDIFF.build(D.fileSize, runs.map((r) => ({ pos: r.abs, bytes: r.cur })), D.fileSize);
+    const blob = new Blob([patch], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a');
+    const stem = D.name.replace(/\.[^.]+$/, '') || 'suikoden-tactics';
+    a.href = url; a.download = `${stem}.xdelta`; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    msg($('#isoOpenMsg'), `Exported ${stem}.xdelta (${patch.length} bytes). Apply to a pristine disc: xdelta3 -d -s disc.iso ${stem}.xdelta out.iso`, 'ok');
+  }
+
   async function importRecipe(file) {
     if (!D.loaded) { msg($('#isoOpenMsg'), 'Open an ISO first, then import a recipe onto it.', 'err'); return; }
     let recipe;
@@ -510,8 +584,20 @@
     $('#isoReviewConfirm').onclick = saveISO;
     $('#isoReviewModal').addEventListener('click', (e) => { if (e.target.id === 'isoReviewModal') closeISOReview(); });
     $('#isoRecipeExport').onclick = exportRecipe;
+    $('#isoXdeltaExport').onclick = exportXdelta;
     $('#isoRecipeImport').onclick = () => $('#isoRecipeFile').click();
     $('#isoRecipeFile').onchange = () => { if ($('#isoRecipeFile').files[0]) importRecipe($('#isoRecipeFile').files[0]); $('#isoRecipeFile').value = ''; };
+
+    // undo / redo
+    $('#isoUndo').onclick = undo;
+    $('#isoRedo').onclick = redo;
+    updateUndoUI();
+    document.addEventListener('keydown', (e) => {
+      if ($('#isoMode').classList.contains('hide')) return;
+      const mod = e.ctrlKey || e.metaKey;
+      if (mod && e.key.toLowerCase() === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+      else if (mod && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))) { e.preventDefault(); redo(); }
+    });
 
     // unsaved guard for ISO edits
     window.addEventListener('beforeunload', (e) => { if (D.loaded && isoDirtyCount() > 0) { e.preventDefault(); e.returnValue = ''; } });

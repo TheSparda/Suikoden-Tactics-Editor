@@ -1,0 +1,308 @@
+{
+ "01": {
+  "desc": "Magic Rune that enables fire magic",
+  "abilities": [
+   "Rank 1: Flame Force",
+   "Rank 2: Flaming Arrows"
+  ]
+ },
+ "02": {
+  "desc": "Magic Rune that enables water magic",
+  "abilities": [
+   "Rank 1: Water Force",
+   "Rank 2: Kindness Drops"
+  ]
+ },
+ "03": {
+  "desc": "Magic Rune that enables more powerful fire magic",
+  "abilities": [
+   "Rank 1: Rage Force",
+   "Rank 2: Blazing Wall"
+  ]
+ },
+ "04": {
+  "desc": "Magic Rune that enables more powerful water magic",
+  "abilities": [
+   "Rank 1: Flowing Force",
+   "Rank 2: Breath of Ice"
+  ]
+ },
+ "05": {
+  "desc": "Magic Rune that enables wind magic",
+  "abilities": [
+   "Rank 1: Wind Force",
+   "Rank 2: Wind of Sleep"
+  ]
+ },
+ "06": {
+  "desc": "Magic Rune that enables more powerful wind magic",
+  "abilities": [
+   "Rank 1: Cyclone Force",
+   "Rank 2: Healing Wind"
+  ]
+ },
+ "07": {
+  "desc": "Magic Rune that enables earth magic",
+  "abilities": [
+   "Rank 1: Earth Force"
+  ]
+ },
+ "08": {
+  "desc": "Magic Rune that enables more powerful earth magic",
+  "abilities": [
+   "Rank 1: Mother"
+  ]
+ },
+ "09": {
+  "desc": "Magic Rune that enables lightning magic",
+  "abilities": [
+   "Rank 1: Lightning Force                         "
+  ]
+ },
+ "0A": {
+  "desc": "Magic Rune that enables more powerful lightning magic",
+  "abilities": [
+   "Rank 1: Thunder Force"
+  ]
+ },
+ "0B": {
+  "desc": "Rune governing atonement and forgiveness",
+  "abilities": [
+   "Rank 1: Eternal Ordeal"
+  ]
+ },
+ "0D": {
+  "desc": "Special Skill.",
+  "abilities": [
+   "Rank 1: Flying Swallow"
+  ]
+ },
+ "0F": {
+  "desc": "Magnificent Skill Rune for Reinbach. (permanently attached to his head).",
+  "abilities": [
+   "Rank 1: Red Rose Etude",
+   "Rank 2: Red Rose Minuet"
+  ]
+ },
+ "10": {
+  "desc": "Special Skill Rune for Mizuki. (permanently attached to her left hand)                                          .",
+  "abilities": [
+   "Rank 1: Shrike Impale"
+  ]
+ },
+ "11": {
+  "desc": "Special Skill Rune for Kika. (permanently attached to her left hand).",
+  "abilities": [
+   "Rank 1: Falcon Slash",
+   "Rank 2: Falcon Thrust"
+  ]
+ },
+ "12": {
+  "desc": "Special Skill Rune for archery",
+  "abilities": [
+   "Rank 1: Shadow Weave"
+  ]
+ },
+ "13": {
+  "desc": "Special Skill Rune for spear-fighting",
+  "abilities": [
+   "Rank 1: First Style                             "
+  ]
+ },
+ "14": {
+  "desc": "Special Skill Rune for one-handed sword users",
+  "abilities": [
+   "Rank 1: Poison Slash",
+   "Rank 2: Viper Bite"
+  ]
+ },
+ "15": {
+  "desc": "Special Skill Rune for great-sword users",
+  "abilities": [
+   "Rank 1: Giant's Hand",
+   "Rank 2: Giant's Foot"
+  ]
+ },
+ "16": {
+  "desc": "Special Skill Rune for claw users.                                                                              .",
+  "abilities": [
+   "Rank 1: Piercing Claw"
+  ]
+ },
+ "17": {
+  "desc": "Special Skill Rune for missile (throwing) weapon users",
+  "abilities": [
+   "Rank 1: Clairvoyance"
+  ]
+ },
+ "19": {
+  "desc": "Special Skill Rune for hand-to-hand fighters",
+  "abilities": [
+   "Rank 1: Gather Strength",
+   "Rank 2: Steel Curtain"
+  ]
+ },
+ "1A": {
+  "desc": "Red Rose."
+ },
+ "1C": {
+  "desc": "Devil's Doll."
+ },
+ "1F": {
+  "desc": "Special Skill Rune for use while riding Kangacorns",
+  "abilities": [
+   "Rank 1: Rush"
+  ]
+ },
+ "20": {
+  "desc": "Special Skill Rune for use while riding Giant Owls",
+  "abilities": [
+   "Rank 1: Wind Blade",
+   "Rank 2: Owl Heart"
+  ]
+ },
+ "21": {
+  "desc": "Permanently attached to Mitsuba's head slot."
+ },
+ "23": {
+  "desc": "Automatically."
+ },
+ "24": {
+  "desc": "Increases chance to score a critical hit"
+ },
+ "25": {
+  "desc": "Increases dodge rate and counter rate"
+ },
+ "26": {
+  "desc": "Increases SPD by 20%"
+ },
+ "27": {
+  "desc": "5% HP healed per turn"
+ },
+ "28": {
+  "desc": "User is healed for 30% of damage inflicted when scoring a critical hit"
+ },
+ "29": {
+  "desc": "Makes enemies less likely to target the skunk rune user (only effective                                     ."
+ },
+ "2A": {
+  "desc": "Permanently attached to Eugene's head slot."
+ },
+ "2B": {
+  "desc": "Makes wearer immune to becoming unbalanced"
+ },
+ "2C": {
+  "desc": "Subtracts half of PDF stat and adds that same amount to STR"
+ },
+ "2D": {
+  "desc": "Subtracts half of MDF stat and adds that same amount to MAG"
+ },
+ "2E": {
+  "desc": "Increases the amount of potch gained from defeated units"
+ },
+ "2F": {
+  "desc": "Increases exp gained by 30% when attacking, using rune abilities, or."
+ },
+ "30": {
+  "desc": "Ishen rune (Mother earth???)."
+ },
+ "31": {
+  "desc": "Increases enemies' levels. Only effective in battles where the enemies."
+ },
+ "32": {
+  "desc": "Permanently attached to Noah's left hand slot."
+ },
+ "33": {
+  "desc": "Moderate chance to cause Bucket status with regular attacks"
+ },
+ "34": {
+  "desc": "Moderate chance that regular attacks will add 1 Balloon to target"
+ },
+ "35": {
+  "desc": "Moderate chance to cause Silence with regular attacks"
+ },
+ "002D": {
+  "desc": "Titan orb."
+ },
+ "002E": {
+  "desc": "-Digging inside the Graska Palace story battle (buried near the throne)."
+ },
+ "002F": {
+  "desc": "-Pre-equipped on Simeon."
+ },
+ "0031": {
+  "desc": "-Pre-equipped on Roget."
+ },
+ "0032": {
+  "desc": "-Story battle at the Small Border Village (in the chest at the far corner)."
+ },
+ "0069": {
+  "desc": "Titan orb."
+ },
+ "006A": {
+  "desc": "Titan orb."
+ },
+ "006B": {
+  "desc": "Titan orb."
+ },
+ "006C": {
+  "desc": "White Tiger Orb                                                                                             ."
+ },
+ "006D": {
+  "desc": "White Tiger Orb                                                                                             ."
+ },
+ "006E": {
+  "desc": "White Tiger Orb                                                                                             ."
+ },
+ "006F": {
+  "desc": "Would you     | 1000 this."
+ },
+ "0072": {
+  "desc": "Giant Owl."
+ },
+ "0073": {
+  "desc": "Giant Owl."
+ },
+ "0074": {
+  "desc": "Giant Owl."
+ },
+ "0075": {
+  "desc": "Giant Owl."
+ },
+ "0076": {
+  "desc": "Giant Owl."
+ },
+ "0078": {
+  "desc": "-Digging in the Graska Palace story battle (buried midway along the left side)."
+ },
+ "007D": {
+  "desc": "-Digging on the 2nd floor of the Obel ruins (buried along the back wall)."
+ },
+ "007E": {
+  "desc": "-Digging at Xasta Grasslands (buried near the back-left corner)."
+ },
+ "0081": {
+  "desc": "-Digging at the Terana Plains story battle (buried shortly past where the."
+ },
+ "0082": {
+  "desc": "-Digging on the 4th floor of the Obel Ruins (buried on the left platform)."
+ },
+ "0083": {
+  "desc": "7. are there 108 stars of destiny ?."
+ },
+ "0084": {
+  "desc": "7. are there 108 stars of destiny ?."
+ },
+ "0085": {
+  "desc": "7. are there 108 stars of destiny ?."
+ },
+ "0086": {
+  "desc": "7. are there 108 stars of destiny ?."
+ },
+ "0087": {
+  "desc": "7. are there 108 stars of destiny ?."
+ },
+ "0088": {
+  "desc": "7. are there 108 stars of destiny ?."
+ }
+}

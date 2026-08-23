@@ -25,8 +25,9 @@ let PY = null;      // resolved pyodide instance (sync access after boot)
 let pyReady = null; // boot promise
 let GLUE = null;    // st_glue python module proxy
 let LISTS = null;   // { shop_items, runes } raw maps
-let ITEMS = [];     // [{id,label,sub}] sorted, for the item picker
-let RUNES = [];     // [{id,label,sub}] sorted, for the rune picker
+let REF = { item: {}, rune: {} };  // guide-derived reference notes (B13)
+let ITEMS = [];     // [{id,label,sub,desc}] sorted, for the item picker
+let RUNES = [];     // [{id,label,sub,desc}] sorted, for the rune picker
 let SVD = null;     // live, editable decoded save state
 let BASE = null;    // pristine baseline (for diff / dirty / revert)
 let META = null;    // { crc_ok, md5_ok, is_card, can_sps, card_saves, folder, ... }
@@ -39,11 +40,12 @@ let deferredInstall = null;  // captured beforeinstallprompt
 function applyTheme(t) {
   document.body.dataset.theme = t;
   const meta = $('#themeColor');
-  if (meta) meta.setAttribute('content', t === 'light' ? '#f5efe1' : '#1a1113');
+  if (meta) meta.setAttribute('content', t === 'light' ? '#cdbb95' : '#17110d');
+  $$('footer .tb').forEach((b) => b.classList.toggle('on', b.dataset.theme === t));
   try { localStorage.setItem('st_theme', t); } catch (e) {}
 }
 applyTheme(localStorage.getItem('st_theme') || 'dark');
-$('#themeBtn').onclick = () => applyTheme(document.body.dataset.theme === 'dark' ? 'light' : 'dark');
+$$('footer .tb').forEach((b) => { b.onclick = () => applyTheme(b.dataset.theme); });
 
 function msg(el, m, kind) { el.textContent = m; el.className = 'msg ' + (kind || 'info'); }
 function escapeHtml(s) { return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
@@ -91,6 +93,9 @@ async function boot() {
       shop_items: await fetchJSON(EDITOR_BASE + 'data/st_shop_items.json'),
       runes: await fetchJSON(EDITOR_BASE + 'data/st_runes.json'),
     };
+    // reference-data enrichment (guide-derived); missing files just hide notes.
+    REF.item = await fetchJSONopt(EDITOR_BASE + 'data/st_item_ref.json');
+    REF.rune = await fetchJSONopt(EDITOR_BASE + 'data/st_rune_ref.json');
     buildLists();
 
     bootProgress(90, 'Starting editor…');
@@ -101,6 +106,7 @@ async function boot() {
     $('#boot').classList.add('hide');
     initUI();
     registerSW();
+    initUpdateCheck();
     await postBoot();          // shared-in file, last-opened chip
   } catch (e) {
     $('#bootMsg').innerHTML = 'Failed to start: ' + escapeHtml(String(e && e.message || e)) +
@@ -113,14 +119,26 @@ async function boot() {
 // still falls back to the SW cache when offline.
 async function fetchText(url) { const r = await fetch(url, { cache: 'no-cache' }); if (!r.ok) throw new Error('fetch ' + url + ' → ' + r.status); return r.text(); }
 async function fetchJSON(url) { const r = await fetch(url, { cache: 'no-cache' }); if (!r.ok) throw new Error('fetch ' + url + ' → ' + r.status); return r.json(); }
+// optional fetch: a missing reference file returns {} and just hides its notes.
+async function fetchJSONopt(url) { try { const r = await fetch(url, { cache: 'no-cache' }); return r.ok ? await r.json() : {}; } catch (e) { return {}; } }
+
+// guide-derived notes, keyed the same way the UI keys items/runes.
+function itemDesc(id) { return REF.item[String(id).padStart(3, '0')] || ''; }
+function runeDesc(id) {
+  const h2 = id.toString(16).toUpperCase().padStart(2, '0');
+  const h4 = id.toString(16).toUpperCase().padStart(4, '0');
+  const r = REF.rune[h2] || REF.rune[h4];
+  if (!r) return '';
+  return r.desc || (r.abilities ? r.abilities.join(', ') : '');
+}
 
 function buildLists() {
   ITEMS = Object.keys(LISTS.shop_items)
-    .map((k) => ({ id: parseInt(k, 10), label: LISTS.shop_items[k], sub: 'id ' + parseInt(k, 10) }))
+    .map((k) => ({ id: parseInt(k, 10), label: LISTS.shop_items[k], sub: 'id ' + parseInt(k, 10), desc: itemDesc(parseInt(k, 10)) }))
     .filter((x) => x.id > 0)
     .sort((a, b) => a.id - b.id);
   RUNES = Object.keys(LISTS.runes)
-    .map((k) => ({ id: parseInt(k, 16), label: LISTS.runes[k], sub: '0x' + k }))
+    .map((k) => ({ id: parseInt(k, 16), label: LISTS.runes[k], sub: '0x' + k, desc: runeDesc(parseInt(k, 16)) }))
     .sort((a, b) => a.id - b.id);
 }
 
@@ -353,7 +371,8 @@ function numFld(label, obj, key, base) {
 function pickerFld(label, obj, key, base, kind) {
   const cur = obj[key];
   const disp = kind === 'item' ? itemLabel(cur) : runeLabel(cur);
-  const d = fld(label, `<button class="pick" type="button">${escapeHtml(disp)}</button>`,
+  const note = kind === 'item' ? itemDesc(cur) : runeDesc(cur);
+  const d = fld(label, `<button class="pick" type="button">${escapeHtml(disp)}</button>${note ? `<div class="fnote">${escapeHtml(note)}</div>` : ''}`,
     cur !== base, () => { obj[key] = base; renderChar(); updateBadge(); });
   d.querySelector('.pick').onclick = () => {
     openPicker({
@@ -419,7 +438,7 @@ function renderPickerList(q) {
   let html = '';
   if (allowEmpty && !q) html += `<div class="prow${!current ? ' sel' : ''}" data-id="0"><b>— empty —</b></div>`;
   html += rows.slice(0, 300).map((it) =>
-    `<div class="prow${it.id === current ? ' sel' : ''}" data-id="${it.id}"><b>${escapeHtml(it.label)}</b><span class="psub">${escapeHtml(it.sub || '')}</span></div>`).join('');
+    `<div class="prow${it.id === current ? ' sel' : ''}" data-id="${it.id}"><div class="pmain"><b>${escapeHtml(it.label)}</b><span class="psub">${escapeHtml(it.sub || '')}</span></div>${it.desc ? `<div class="pdesc">${escapeHtml(it.desc)}</div>` : ''}</div>`).join('');
   if (capped) html += `<div class="phint">${rows.length} matches — keep typing to narrow…</div>`;
   if (!rows.length && q) html += `<div class="phint">No match. Type an id number to force a raw value.</div>`;
   const list = $('#pickList');
@@ -603,6 +622,25 @@ function initUI() {
 /* ---------------------------------------------------------- service wrkr -- */
 function registerSW() {
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW register failed', e));
+}
+
+/* ---------------------------------------------------- update / staleness -- */
+// B17: a version-behind check + a permanent Force-refresh escape hatch, so a
+// stuck service worker can never pin users to an old build.
+function initUpdateCheck() {
+  const cur = ($('#appVersion') && $('#appVersion').dataset.version) || '';
+  const fr = $('#forceRefresh');
+  if (fr) fr.onclick = async () => {
+    try { const regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map((r) => r.unregister())); } catch (e) {}
+    try { if (self.caches) { const ks = await caches.keys(); await Promise.all(ks.map((k) => caches.delete(k))); } } catch (e) {}
+    location.reload();
+  };
+  if ($('#updateReload')) $('#updateReload').onclick = () => location.reload();
+  // cache-busted fetch bypasses both HTTP and SW caches
+  fetch('index.html?cb=' + Date.now(), { cache: 'no-store' }).then((r) => r.text()).then((html) => {
+    const m = html.match(/data-version="([^"]+)"/);
+    if (m && cur && m[1] !== cur) $('#updatePrompt').classList.remove('hide');
+  }).catch(() => {});
 }
 
 pyReady = boot();

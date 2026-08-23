@@ -22,13 +22,13 @@
  </div>
 </div>
 
+<div class="wrap">
 <header>
  <h1>Suikoden Tactics — Editor</h1>
- <span class="sub">USA · PAL &nbsp;|&nbsp; 100% in your browser — nothing is uploaded</span>
+ <span class="tag">web · runs on your device</span>
  <span class="spacer"></span>
  <span id="unsaved" class="badge hide"></span>
- <button class="ghost hide" id="installBtn">⬇ Install</button>
- <button class="ghost" id="themeBtn">Theme</button>
+ <button class="ghost hide" id="installBtn">⬇ Install app</button>
 </header>
 
 <nav id="modeTabs">
@@ -189,6 +189,18 @@
  </div><!-- /isoMode -->
 </main>
 
+<footer>
+ <button class="tb" data-theme="dark">Crimson &amp; Gold</button>
+ <button class="tb" data-theme="light">Parchment</button>
+ <span class="credit">Made by <b>Sparda</b> ·
+  <a href="https://github.com/TheSparda/Suikoden-Tactics-Editor" target="_blank" rel="noopener">GitHub</a>
+  · <span id="appVersion" data-version="1.2.0">v1.2.0</span> ·
+  <button type="button" id="forceRefresh" class="linklike" title="Clear cached files + service worker and reload the latest version">↻ Force refresh</button></span>
+ <span class="note">Save editor: client-side Pyodide port of the desktop save modules (works everywhere).
+  ISO editor: client-side port of the desktop ISO tables; in-place edits on desktop Chromium.</span>
+</footer>
+</div><!-- /wrap -->
+
 <!-- sticky action toolbar (save mode) -->
 <div id="actionbar" class="hide">
  <span id="barStatus" class="muted"></span>
@@ -198,10 +210,13 @@
 
 <!-- sticky action toolbar (ISO mode) -->
 <div id="isoActionbar" class="hide">
+ <button class="ghost" id="isoUndo" title="Undo (Ctrl+Z)" disabled>↶</button>
+ <button class="ghost" id="isoRedo" title="Redo (Ctrl+Y)" disabled>↷</button>
  <span id="isoBarStatus" class="muted"></span>
  <span class="spacer"></span>
- <button class="ghost" id="isoRecipeExport">Export recipe</button>
- <button id="isoApplyBtn">Review &amp; save to ISO…</button>
+ <button class="ghost" id="isoRecipeExport" title="Export a .stmod recipe">Recipe</button>
+ <button class="ghost" id="isoXdeltaExport" title="Export a standard .xdelta patch">.xdelta</button>
+ <button id="isoApplyBtn">Review &amp; save…</button>
 </div>
 
 <!-- searchable picker modal -->
@@ -247,10 +262,11 @@
  </div>
 </div>
 
-<footer>Made by Sparda · <a href="https://github.com/TheSparda/Suikoden-Tactics-Editor" target="_blank" rel="noopener">github.com/TheSparda/Suikoden-Tactics-Editor</a></footer>
+<div id="updatePrompt" class="hide">A newer version is available. <button id="updateReload" class="linklike"><b>Reload</b></button></div>
 
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
 <script src="app.js"></script>
+<script src="vcdiff.js"></script>
 <script src="iso.js"></script>
 </body>
 </html>

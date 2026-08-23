@@ -12,6 +12,28 @@ The **Save editor** supports every container the desktop does:
 The **ISO editor** edits a USA *Suikoden Tactics* (SLUS-21245) disc image
 **in place**.
 
+## Depth features
+
+- **Inline guide notes.** Item and rune fields/pickers show a short
+  guide-derived description ("Heals 50 HP", "Magic Rune that enables fire
+  magic"). Derived from the local GameFAQs/Neoseeker guides into small committed
+  JSON (`st_rune_ref.json`, `st_item_ref.json`) — the guide prose itself is not
+  committed (copyright); regenerate with `st-editor/build_rune_ref.py` /
+  `build_item_ref.py`.
+- **Real field labels.** The ISO data tables show V11's own field names
+  (recovered from the decompiled editor), not `f1 @+0x00`.
+- **ISO undo/redo** (Ctrl+Z / Ctrl+Y) — one user action per step, via a single
+  write-hook + microtask transaction.
+- **Presets** in the Characters view: Max growth (SS), Max all skills, Clear
+  skills — staged like any edit (reviewable, revertible, undoable).
+- **`.xdelta` export** — a standard VCDIFF patch synthesized directly from your
+  staged edits (no full-disc diff), alongside the `.stmod` recipe. Apply to a
+  **pristine** disc: `xdelta3 -d -s disc.iso edits.xdelta out.iso` (a synthesized
+  patch has no source checksum).
+- **Force refresh + version-behind check** in the footer, so a stuck service
+  worker can never pin you to an old build.
+- Two themes (**Crimson & Gold** / **Parchment**), matching the desktop editor.
+
 ## ISO editor
 
 Edit the disc's character growth ranks, weapon type/growth, runes, innate

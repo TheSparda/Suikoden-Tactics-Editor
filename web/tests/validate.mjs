@@ -14,7 +14,7 @@ let pass = 0, fail = 0;
 const ok = (cond, label) => { if (cond) { pass++; console.log('  PASS ' + label); } else { fail++; console.log('  FAIL ' + label); } };
 
 console.log('=== JS files parse ===');
-for (const f of ['app.js', 'iso.js', 'sw.js', 'tests/validate.mjs', 'tests/e2e.mjs']) {
+for (const f of ['app.js', 'iso.js', 'vcdiff.js', 'sw.js', 'tests/validate.mjs', 'tests/e2e.mjs']) {
   try { execFileSync(process.execPath, ['--check', join(WEB, f)]); ok(true, f + ' parses'); }
   catch (e) { ok(false, f + ' parses (' + (e.stderr || e.message).toString().split('\n')[0] + ')'); }
 }
@@ -26,7 +26,11 @@ ok(html.includes('cdn.jsdelivr.net/pyodide/v0.26.2/'), 'pins Pyodide v0.26.2');
 ok(html.includes('viewport-fit=cover'), 'viewport-fit=cover (notch-safe)');
 ok(html.includes('rel="manifest"'), 'links the manifest');
 ok(html.includes('src="iso.js"'), 'loads iso.js');
+ok(html.includes('src="vcdiff.js"'), 'loads vcdiff.js');
 ok(html.includes('id="modeTabs"') && html.includes('data-mode="iso"'), 'has Save|ISO mode tabs');
+for (const id of ['isoUndo', 'isoRedo', 'isoXdeltaExport', 'appVersion', 'forceRefresh', 'updatePrompt']) {
+  ok(html.includes(`id="${id}"`), `has #${id}`);
+}
 for (const id of ['boot', 'bootBar', 'drop', 'file', 'fsBtn', 'lastChip', 'installBtn',
   'unsaved', 'char', 'stats', 'equip', 'runes', 'invBody', 'target', 'delivery',
   'applyBtn', 'pickModal', 'pickSearch', 'pickList', 'reviewModal', 'reviewBody',
@@ -66,7 +70,29 @@ for (const [needle, label] of [
   ['stmod', 'recipe export/import'],
   ['requestPermission', 're-grant write permission'],
   ['beforeunload', 'ISO unsaved guard'],
+  ['queueMicrotask', 'undo/redo transaction (microtask)'],
+  ['function undo', 'undo'],
+  ['function redo', 'redo'],
+  ['exportXdelta', 'VCDIFF (.xdelta) export'],
+  ['VCDIFF.build', 'uses the VCDIFF encoder'],
+  ["data-p=maxgrowth", 'growth/skill presets'],
+  ['noteFor', 'inline guide notes (enrichment)'],
 ]) ok(iso.includes(needle), label);
+
+console.log('\n=== app.js depth features ===');
+for (const [needle, label] of [
+  ['initUpdateCheck', 'version-behind check'],
+  ['forceRefresh', 'force-refresh escape hatch'],
+  ['fetchJSONopt', 'defensive reference fetch'],
+  ['itemDesc', 'item enrichment helper'],
+  ['runeDesc', 'rune enrichment helper'],
+]) ok(app.includes(needle), label);
+
+console.log('\n=== vcdiff.js ===');
+const vc = read('vcdiff.js');
+ok(vc.includes('0xd6') && vc.includes('0xc3') && vc.includes('0xc4'), 'emits VCDIFF magic');
+ok(vc.includes('function build') || vc.includes('build ='), 'has build()');
+ok(vc.includes('VCD_SOURCE') || vc.includes('0x01'), 'uses a VCD_SOURCE window');
 
 console.log('\n=== char schema (generated from stfields.py) ===');
 const schema = JSON.parse(read('../st-editor/data/st_char_schema.json'));
@@ -90,10 +116,23 @@ ok(/CACHE\s*=\s*'st-save-editor-v\d+'/.test(sw), 'has a versioned CACHE name');
 ok(sw.includes("'POST'") && sw.includes('shared=1'), 'handles the Web Share POST');
 ok(sw.includes('SHARE_CACHE') && sw.includes("k !== SHARE_CACHE"), 'never purges the share cache');
 ok(sw.includes("'./iso.js'"), 'precaches iso.js');
+ok(sw.includes("'./vcdiff.js'"), 'precaches vcdiff.js');
 for (const f of ['st_characters.json', 'st_tables.json', 'st_char_schema.json',
-  'st_weapon_types.json', 'st_rune_orbs.json', 'st_skills.json', 'st_enemies.json']) {
+  'st_weapon_types.json', 'st_rune_orbs.json', 'st_skills.json', 'st_enemies.json',
+  'st_rune_ref.json', 'st_item_ref.json']) {
   ok(sw.includes('/' + f), 'precaches ' + f);
 }
+
+console.log('\n=== version consistency (release = tag rule) ===');
+const pkg = JSON.parse(read('package.json'));
+const vm = html.match(/data-version="([^"]+)"/);
+ok(vm && vm[1] === pkg.version, `index data-version (${vm && vm[1]}) matches package.json (${pkg.version})`);
+
+console.log('\n=== reference enrichment data ===');
+const runeRef = JSON.parse(read('../st-editor/data/st_rune_ref.json'));
+const itemRef = JSON.parse(read('../st-editor/data/st_item_ref.json'));
+ok(Object.keys(runeRef).length >= 40, `st_rune_ref.json has ${Object.keys(runeRef).length} runes`);
+ok(Object.keys(itemRef).length >= 100, `st_item_ref.json has ${Object.keys(itemRef).length} items`);
 
 console.log('\n=== manifest ===');
 const mani = JSON.parse(read('manifest.webmanifest'));
