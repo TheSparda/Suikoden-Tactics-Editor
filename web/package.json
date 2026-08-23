@@ -1,6 +1,6 @@
 {
   "name": "suikoden-tactics-web-editor",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
   "description": "Client-side Suikoden Tactics save + ISO editor (Pyodide PWA) — tests.",
   "type": "module",
