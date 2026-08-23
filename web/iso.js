@@ -28,7 +28,9 @@
   };
 
   /* ------------------------------------------------------------ data load - */
-  async function loadJSON(url) { const r = await fetch(url); if (!r.ok) throw new Error('fetch ' + url + ' → ' + r.status); return r.json(); }
+  // no-cache: always revalidate (304 when unchanged) so edited data tables are
+  // never served stale; still falls back to the SW cache when offline.
+  async function loadJSON(url) { const r = await fetch(url, { cache: 'no-cache' }); if (!r.ok) throw new Error('fetch ' + url + ' → ' + r.status); return r.json(); }
 
   let dataPromise = null;
   function ensureData() {

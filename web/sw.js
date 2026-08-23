@@ -9,7 +9,7 @@
  * Bump CACHE when any precached shell file changes to invalidate old caches.
  * Never purge SHARE_CACHE — it may hold a pending shared-in file.
  */
-const CACHE = 'st-save-editor-v3';
+const CACHE = 'st-save-editor-v4';
 const SHARE_CACHE = 'st-share';
 
 const SHELL = [
@@ -41,7 +41,10 @@ const SHELL = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // cache:'reload' so precached shell/data bypass the HTTP cache and are fresh.
+  e.waitUntil(caches.open(CACHE)
+    .then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {

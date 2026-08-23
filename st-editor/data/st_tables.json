@@ -116,32 +116,32 @@
    {
     "off": 0,
     "w": 2,
-    "label": "f1 @+0x00 (u16)"
+    "label": "1st item"
    },
    {
     "off": 2,
     "w": 2,
-    "label": "f2 @+0x02 (u16)"
+    "label": "2nd item"
    },
    {
     "off": 4,
     "w": 2,
-    "label": "f3 @+0x04 (u16)"
+    "label": "7th item"
    },
    {
     "off": 6,
     "w": 2,
-    "label": "f4 @+0x06 (u16)"
+    "label": "4th item"
    },
    {
     "off": 8,
     "w": 2,
-    "label": "f5 @+0x08 (u16)"
+    "label": "5th item"
    },
    {
     "off": 10,
     "w": 2,
-    "label": "f6 @+0x0A (u16)"
+    "label": "6th item"
    },
    {
     "off": 12,
@@ -151,112 +151,112 @@
    {
     "off": 14,
     "w": 2,
-    "label": "f8 @+0x0E (u16)"
+    "label": "8th item"
    },
    {
     "off": 16,
     "w": 2,
-    "label": "f9 @+0x10 (u16)"
+    "label": "9th item"
    },
    {
     "off": 18,
     "w": 2,
-    "label": "f10 @+0x12 (u16)"
+    "label": "10th item"
    },
    {
     "off": 20,
     "w": 2,
-    "label": "f11 @+0x14 (u16)"
+    "label": "11th item"
    },
    {
     "off": 22,
     "w": 2,
-    "label": "f12 @+0x16 (u16)"
+    "label": "12th item"
    },
    {
     "off": 24,
     "w": 2,
-    "label": "f13 @+0x18 (u16)"
+    "label": "13th item"
    },
    {
     "off": 26,
     "w": 2,
-    "label": "f14 @+0x1A (u16)"
+    "label": "14th item"
    },
    {
     "off": 28,
     "w": 2,
-    "label": "f15 @+0x1C (u16)"
+    "label": "15th item"
    },
    {
     "off": 30,
     "w": 2,
-    "label": "f16 @+0x1E (u16)"
+    "label": "16th item"
    },
    {
     "off": 32,
     "w": 2,
-    "label": "f17 @+0x20 (u16)"
+    "label": "17th item"
    },
    {
     "off": 34,
     "w": 2,
-    "label": "f18 @+0x22 (u16)"
+    "label": "18th item"
    },
    {
     "off": 36,
     "w": 2,
-    "label": "f19 @+0x24 (u16)"
+    "label": "19th item"
    },
    {
     "off": 38,
     "w": 2,
-    "label": "f20 @+0x26 (u16)"
+    "label": "20th item"
    },
    {
     "off": 40,
     "w": 2,
-    "label": "f21 @+0x28 (u16)"
+    "label": "21st item"
    },
    {
     "off": 42,
     "w": 2,
-    "label": "f22 @+0x2A (u16)"
+    "label": "22nd item"
    },
    {
     "off": 44,
     "w": 2,
-    "label": "f23 @+0x2C (u16)"
+    "label": "23rd item"
    },
    {
     "off": 46,
     "w": 2,
-    "label": "f24 @+0x2E (u16)"
+    "label": "24th item"
    },
    {
     "off": 48,
     "w": 2,
-    "label": "f25 @+0x30 (u16)"
+    "label": "25th item"
    },
    {
     "off": 50,
     "w": 2,
-    "label": "f26 @+0x32 (u16)"
+    "label": "26th item"
    },
    {
     "off": 52,
     "w": 2,
-    "label": "f27 @+0x34 (u16)"
+    "label": "27th item"
    },
    {
     "off": 54,
     "w": 2,
-    "label": "f28 @+0x36 (u16)"
+    "label": "28th item"
    },
    {
     "off": 56,
     "w": 2,
-    "label": "f29 @+0x38 (u16)"
+    "label": "29th item"
    },
    {
     "off": 60,
@@ -266,22 +266,22 @@
    {
     "off": 64,
     "w": 2,
-    "label": "f32 @+0x40 (u16)"
+    "label": "Chance of getting 1st bargain (%)"
    },
    {
     "off": 70,
     "w": 2,
-    "label": "f33 @+0x46 (u16)"
+    "label": "1st bargain item (hex)"
    },
    {
     "off": 74,
     "w": 2,
-    "label": "f34 @+0x4A (u16)"
+    "label": "Chance of getting 2nd bargain (%)"
    },
    {
     "off": 80,
     "w": 2,
-    "label": "f35 @+0x50 (u16)"
+    "label": "3rd bargain item (hex)"
    },
    {
     "off": 84,
@@ -299,32 +299,32 @@
    {
     "off": 0,
     "w": 2,
-    "label": "f1 @+0x00 (u16)"
+    "label": "1st Orb"
    },
    {
     "off": 2,
     "w": 2,
-    "label": "f2 @+0x02 (u16)"
+    "label": "2nd Orb"
    },
    {
     "off": 4,
     "w": 2,
-    "label": "f3 @+0x04 (u16)"
+    "label": "7th Orb"
    },
    {
     "off": 6,
     "w": 2,
-    "label": "f4 @+0x06 (u16)"
+    "label": "4th Orb"
    },
    {
     "off": 8,
     "w": 2,
-    "label": "f5 @+0x08 (u16)"
+    "label": "5th Orb"
    },
    {
     "off": 10,
     "w": 2,
-    "label": "f6 @+0x0A (u16)"
+    "label": "6th Orb"
    },
    {
     "off": 12,
@@ -334,87 +334,87 @@
    {
     "off": 14,
     "w": 2,
-    "label": "f8 @+0x0E (u16)"
+    "label": "8th Orb"
    },
    {
     "off": 16,
     "w": 2,
-    "label": "f9 @+0x10 (u16)"
+    "label": "9th Orb"
    },
    {
     "off": 18,
     "w": 2,
-    "label": "f10 @+0x12 (u16)"
+    "label": "10th Orb"
    },
    {
     "off": 20,
     "w": 2,
-    "label": "f11 @+0x14 (u16)"
+    "label": "11th Orb"
    },
    {
     "off": 22,
     "w": 2,
-    "label": "f12 @+0x16 (u16)"
+    "label": "12th Orb"
    },
    {
     "off": 24,
     "w": 2,
-    "label": "f13 @+0x18 (u16)"
+    "label": "13th Orb"
    },
    {
     "off": 26,
     "w": 2,
-    "label": "f14 @+0x1A (u16)"
+    "label": "14th Orb"
    },
    {
     "off": 28,
     "w": 2,
-    "label": "f15 @+0x1C (u16)"
+    "label": "15th Orb"
    },
    {
     "off": 30,
     "w": 2,
-    "label": "f16 @+0x1E (u16)"
+    "label": "16th Orb"
    },
    {
     "off": 32,
     "w": 2,
-    "label": "f17 @+0x20 (u16)"
+    "label": "17th Orb"
    },
    {
     "off": 34,
     "w": 2,
-    "label": "f18 @+0x22 (u16)"
+    "label": "18th Orb"
    },
    {
     "off": 36,
     "w": 2,
-    "label": "f19 @+0x24 (u16)"
+    "label": "19th Orb"
    },
    {
     "off": 38,
     "w": 2,
-    "label": "f20 @+0x26 (u16)"
+    "label": "20th Orb"
    },
    {
     "off": 40,
     "w": 2,
-    "label": "f21 @+0x28 (u16)"
+    "label": "21st Orb"
    },
    {
     "off": 42,
     "w": 2,
-    "label": "f22 @+0x2A (u16)"
+    "label": "22nd Orb"
    },
    {
     "off": 44,
     "w": 2,
-    "label": "f23 @+0x2C (u16)"
+    "label": "23rd Orb"
    },
    {
     "off": 46,
     "w": 2,
-    "label": "f24 @+0x2E (u16)"
+    "label": "24th Orb"
    }
   ]
  },
@@ -427,7 +427,7 @@
    {
     "off": 0,
     "w": 2,
-    "label": "Price (x10)"
+    "label": "Price (x 10)"
    }
   ]
  },
@@ -440,87 +440,87 @@
    {
     "off": 0,
     "w": 2,
-    "label": "f1 @+0x00 (u16)"
+    "label": "How strong (E)"
    },
    {
     "off": 2,
     "w": 2,
-    "label": "f2 @+0x02 (u16)"
+    "label": "How strong (E, secondary)"
    },
    {
     "off": 12,
     "w": 2,
-    "label": "f4 @+0x0C (u16)"
+    "label": "How strong (D)"
    },
    {
     "off": 14,
     "w": 2,
-    "label": "f5 @+0x0E (u16)"
+    "label": "How strong (D, secondary)"
    },
    {
     "off": 20,
     "w": 2,
-    "label": "f6 @+0x14 (u16)"
+    "label": "D upgrade SP cost"
    },
    {
     "off": 24,
     "w": 2,
-    "label": "f7 @+0x18 (u16)"
+    "label": "How strong (C)"
    },
    {
     "off": 26,
     "w": 2,
-    "label": "f8 @+0x1A (u16)"
+    "label": "How strong (C, secondary)"
    },
    {
     "off": 32,
     "w": 2,
-    "label": "f9 @+0x20 (u16)"
+    "label": "C upgrade SP cost"
    },
    {
     "off": 36,
     "w": 2,
-    "label": "f10 @+0x24 (u16)"
+    "label": "How strong (B)"
    },
    {
     "off": 38,
     "w": 2,
-    "label": "f11 @+0x26 (u16)"
+    "label": "How strong (B, secondary)"
    },
    {
     "off": 44,
     "w": 2,
-    "label": "f12 @+0x2C (u16)"
+    "label": "B upgrade SP cost"
    },
    {
     "off": 48,
     "w": 2,
-    "label": "f13 @+0x30 (u16)"
+    "label": "How strong (A)"
    },
    {
     "off": 50,
     "w": 2,
-    "label": "f14 @+0x32 (u16)"
+    "label": "How strong (A, secondary)"
    },
    {
     "off": 56,
     "w": 2,
-    "label": "f15 @+0x38 (u16)"
+    "label": "A upgrade SP cost"
    },
    {
     "off": 60,
     "w": 2,
-    "label": "f16 @+0x3C (u16)"
+    "label": "How strong (S)"
    },
    {
     "off": 62,
     "w": 2,
-    "label": "f17 @+0x3E (u16)"
+    "label": "How strong (S, secondary)"
    },
    {
     "off": 68,
     "w": 2,
-    "label": "f18 @+0x44 (u16)"
+    "label": "S upgrade SP cost"
    }
   ]
  },
@@ -533,122 +533,122 @@
    {
     "off": 0,
     "w": 2,
-    "label": "f1 @+0x00 (u16)"
+    "label": "Move"
    },
    {
     "off": 2,
     "w": 2,
-    "label": "f2 @+0x02 (u16)"
+    "label": "Jump"
    },
    {
     "off": 4,
     "w": 2,
-    "label": "f3 @+0x04 (u16)"
+    "label": "HP Growth Rate"
    },
    {
     "off": 6,
     "w": 2,
-    "label": "f4 @+0x06 (u16)"
+    "label": "Strength"
    },
    {
     "off": 8,
     "w": 2,
-    "label": "f5 @+0x08 (u16)"
+    "label": "Skill"
    },
    {
     "off": 10,
     "w": 2,
-    "label": "f6 @+0x0A (u16)"
+    "label": "Magic"
    },
    {
     "off": 12,
     "w": 2,
-    "label": "f7 @+0x0C (u16)"
+    "label": "Evade"
    },
    {
     "off": 14,
     "w": 2,
-    "label": "f8 @+0x0E (u16)"
+    "label": "PDF"
    },
    {
     "off": 16,
     "w": 2,
-    "label": "f9 @+0x10 (u16)"
+    "label": "MDF"
    },
    {
     "off": 18,
     "w": 2,
-    "label": "f10 @+0x12 (u16)"
+    "label": "Speed"
    },
    {
     "off": 20,
     "w": 2,
-    "label": "f11 @+0x14 (u16)"
+    "label": "Luck"
    },
    {
     "off": 148,
     "w": 2,
-    "label": "f41 @+0x94 (u16)"
+    "label": "Dropped item #1"
    },
    {
     "off": 150,
     "w": 2,
-    "label": "f42 @+0x96 (u16)"
+    "label": "Dropped item #2"
    },
    {
     "off": 152,
     "w": 2,
-    "label": "f43 @+0x98 (u16)"
+    "label": "Dropped item #3"
    },
    {
     "off": 154,
     "w": 2,
-    "label": "f44 @+0x9A (u16)"
+    "label": "Dropped item #4"
    },
    {
     "off": 156,
     "w": 2,
-    "label": "f45 @+0x9C (u16)"
+    "label": "Stolen item #1"
    },
    {
     "off": 158,
     "w": 2,
-    "label": "f46 @+0x9E (u16)"
+    "label": "Stolen item #2"
    },
    {
     "off": 166,
     "w": 1,
-    "label": "f49 @+0xA6 (u8)"
+    "label": "Chance of dropping item #1 (%)"
    },
    {
     "off": 167,
     "w": 1,
-    "label": "f50 @+0xA7 (u8)"
+    "label": "Chance of dropping item #2 (%)"
    },
    {
     "off": 168,
     "w": 1,
-    "label": "f51 @+0xA8 (u8)"
+    "label": "Chance of dropping item #3 (%)"
    },
    {
     "off": 169,
     "w": 1,
-    "label": "f52 @+0xA9 (u8)"
+    "label": "Chance of dropping item #4 (%)"
    },
    {
     "off": 170,
     "w": 1,
-    "label": "f53 @+0xAA (u8)"
+    "label": "Chance of stealing item #1 (%)"
    },
    {
     "off": 171,
     "w": 1,
-    "label": "f54 @+0xAB (u8)"
+    "label": "Chance of stealing item #2 (%)"
    },
    {
     "off": 205,
     "w": 1,
-    "label": "f61 @+0xCD (u8)"
+    "label": "Attack Power"
    }
   ]
  }

@@ -109,8 +109,10 @@ async function boot() {
   }
 }
 
-async function fetchText(url) { const r = await fetch(url); if (!r.ok) throw new Error('fetch ' + url + ' → ' + r.status); return r.text(); }
-async function fetchJSON(url) { const r = await fetch(url); if (!r.ok) throw new Error('fetch ' + url + ' → ' + r.status); return r.json(); }
+// no-cache: revalidate so edited modules/data tables are never served stale;
+// still falls back to the SW cache when offline.
+async function fetchText(url) { const r = await fetch(url, { cache: 'no-cache' }); if (!r.ok) throw new Error('fetch ' + url + ' → ' + r.status); return r.text(); }
+async function fetchJSON(url) { const r = await fetch(url, { cache: 'no-cache' }); if (!r.ok) throw new Error('fetch ' + url + ' → ' + r.status); return r.json(); }
 
 function buildLists() {
   ITEMS = Object.keys(LISTS.shop_items)
