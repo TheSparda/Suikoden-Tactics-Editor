@@ -64,6 +64,8 @@
     return m[hex2(val)] || m[hex4(val)] || `0x${hex2(val)} (?)`;
   }
   function rankLabel(v) { return D.schema.growth_ranks[String(v)] || `0x${hex2(v)} (?)`; }
+  // enum display where 0 means "unset" (rune slots start at 0x01, weapon types at 0x01)
+  function enumLabel(mapName, v) { return v ? mapLabel(mapName, v) : '— none —'; }
   function elemLabel(v) { return D.schema.elements[String(v)] || `0x${hex2(v)} (?)`; }
   function itemName(id) { return D.itemNames[String(id).padStart(3, '0')] || ''; }
 
@@ -334,7 +336,7 @@
     // Weapon
     host.appendChild(section('Weapon'));
     const wt = F.find((f) => f.key === 'weapon_type');
-    const wchildren = [pickerControl(base + wt.offset, wt.w, grp('weapon'), wt.label, 'weapon_types', (v) => mapLabel('weapon_types', v))];
+    const wchildren = [pickerControl(base + wt.offset, wt.w, grp('weapon'), wt.label, 'weapon_types', (v) => enumLabel('weapon_types', v))];
     const wg = D.schema.weapon_growth;
     for (let lv = 0; lv < wg.levels; lv++) wchildren.push(numControl(base + wg.offset + lv, 1, grp('weapon'), `Wpn growth Lv${lv + 1}`, 0, 255));
     host.appendChild(grid(wchildren));
@@ -342,7 +344,7 @@
     // Runes + Element
     host.appendChild(section('Runes & element'));
     const re = [];
-    F.filter((f) => f.kind === 'enum' && f.data === 'runes').forEach((f) => re.push(pickerControl(base + f.offset, f.w, grp('runes'), f.label, 'runes', (v) => mapLabel('runes', v))));
+    F.filter((f) => f.kind === 'enum' && f.data === 'runes').forEach((f) => re.push(pickerControl(base + f.offset, f.w, grp('runes'), f.label, 'runes', (v) => enumLabel('runes', v))));
     const el = F.find((f) => f.kind === 'element');
     if (el) re.push(selectControl(base + el.offset, el.w, grp('element'), el.label, Object.keys(D.schema.elements).map((k) => ({ v: +k, t: elemLabel(+k) })), elemLabel));
     const mv = F.find((f) => f.key === 'move'); if (mv) re.push(numControl(base + mv.offset, 1, grp('misc'), mv.label, 0, 255));
