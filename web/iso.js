@@ -306,7 +306,7 @@
 
     // Growth ranks
     host.appendChild(section('Growth ranks'));
-    const rankOpts = Object.keys(D.schema.growth_ranks).map((k) => ({ v: +k, t: `${rankLabel(+k)} (0x${hex2(+k)})` }));
+    const rankOpts = Object.keys(D.schema.growth_ranks).map((k) => ({ v: +k, t: rankLabel(+k) }));
     host.appendChild(grid(G('rank').map((f) => selectControl(base + f.offset, f.w, grp('growth'), f.label, rankOpts, rankLabel))));
 
     // Weapon
@@ -352,6 +352,41 @@
   }
   function tableRowName(name, id) { const n = recordName(name, id); return n ? `${id} — ${n}` : `${id}`; }
 
+  // A table field that holds an item / rune-orb ID → render a searchable named
+  // picker instead of a raw number. Detected from the (V11-recovered) label:
+  // "1st item"/"Dropped item #1" → item; "1st Orb" → rune orb. Percentage /
+  // price fields that merely contain "item" are excluded.
+  function fieldRef(label) {
+    if (/chance|%|price/i.test(label)) return null;
+    if (/\borb\b/i.test(label)) return 'orb';
+    if (/\bitem\b/i.test(label)) return 'item';
+    return null;
+  }
+  function refItems(ref) {
+    if (ref === 'orb') return mapPickerList('rune_orbs');
+    return (typeof ITEMS !== 'undefined') ? ITEMS : [];
+  }
+  function refLabel(ref, v) {
+    if (!v) return '— none —';
+    if (ref === 'orb') return mapLabel('rune_orbs', v);
+    const n = typeof itemName === 'function' ? itemName(v) : '';
+    return n ? `${n} [${v}]` : `unknown [${v}]`;
+  }
+  function tblPicker(abs, w, group, label, ref) {
+    const d = document.createElement('div'); d.className = 'fld';
+    const cur = rd(abs, w), dirty = cur !== rdOrig(abs, w);
+    const fmt = (v) => refLabel(ref, v);
+    d.innerHTML = `<label>${escapeHtml(label)}${dirty ? '<button class="revert" title="revert" type="button">↺</button>' : ''}</label>
+      <button class="pick" type="button">${escapeHtml(fmt(cur))}</button>`;
+    if (dirty) d.classList.add('chg');
+    d.querySelector('.pick').onclick = () => openPicker({
+      title: label, items: refItems(ref), current: cur, allowEmpty: true,
+      onPick: (id) => { wrVal(abs, w, id); reconcileEdit(abs, w, group, label, fmt); rerender(); },
+    });
+    if (dirty) d.querySelector('.revert').onclick = () => { wrVal(abs, w, rdOrig(abs, w)); reconcileEdit(abs, w, group, label, fmt); rerender(); };
+    return d;
+  }
+
   function renderTable(name) {
     const host = $('#isoView'); host.innerHTML = '';
     const t = D.tables[name]; if (!t) { host.textContent = 'No such table.'; return; }
@@ -371,7 +406,11 @@
 
     const recOff = t.base + D.tableId * t.stride;
     const grp = `table:${name}:${D.tableId}`;
-    host.appendChild(grid(t.fields.map((f) => numControl(recOff + f.off, f.w, grp, f.label, 0, (1 << (8 * f.w)) - 1))));
+    host.appendChild(grid(t.fields.map((f) => {
+      const ref = fieldRef(f.label);
+      if (ref) return tblPicker(recOff + f.off, f.w, grp, f.label, ref);
+      return numControl(recOff + f.off, f.w, grp, f.label, 0, (1 << (8 * f.w)) - 1);
+    })));
   }
 
   // hexKeys: keys are hex (runes/weapon/orbs) → show 0xNN; else decimal id.

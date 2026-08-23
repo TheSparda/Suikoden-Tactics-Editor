@@ -437,8 +437,9 @@ function renderPickerList(q) {
   const capped = rows.length > 300;
   let html = '';
   if (allowEmpty && !q) html += `<div class="prow${!current ? ' sel' : ''}" data-id="0"><b>— empty —</b></div>`;
+  // ids stay searchable (filter above) but aren't shown — only name + guide note
   html += rows.slice(0, 300).map((it) =>
-    `<div class="prow${it.id === current ? ' sel' : ''}" data-id="${it.id}"><div class="pmain"><b>${escapeHtml(it.label)}</b><span class="psub">${escapeHtml(it.sub || '')}</span></div>${it.desc ? `<div class="pdesc">${escapeHtml(it.desc)}</div>` : ''}</div>`).join('');
+    `<div class="prow${it.id === current ? ' sel' : ''}" data-id="${it.id}"><b>${escapeHtml(it.label)}</b>${it.desc ? `<div class="pdesc">${escapeHtml(it.desc)}</div>` : ''}</div>`).join('');
   if (capped) html += `<div class="phint">${rows.length} matches — keep typing to narrow…</div>`;
   if (!rows.length && q) html += `<div class="phint">No match. Type an id number to force a raw value.</div>`;
   const list = $('#pickList');
