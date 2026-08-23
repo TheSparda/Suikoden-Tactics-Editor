@@ -17,6 +17,7 @@ def build():
     return {
         "record_len": F.RECORD_LEN,
         "growth_ranks": {str(k): v for k, v in F.GROWTH_RANKS.items()},
+        "growth_rank_notes": {str(k): v for k, v in getattr(F, "GROWTH_RANK_NOTES", {}).items()},
         "elements": {str(k): v for k, v in F.ELEMENTS.items()},
         "weapon_growth": {"offset": F.WEAPON_GROWTH_OFFSET, "levels": F.WEAPON_GROWTH_LEVELS},
         "skill_block": {"offset": F.SKILL_BLOCK_OFFSET, "count": F.SKILL_COUNT, "rank_max": F.SKILL_RANK_MAX},

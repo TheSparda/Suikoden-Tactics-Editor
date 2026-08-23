@@ -276,6 +276,23 @@
     return d;
   }
 
+  // picker over an explicit item list (each row can carry a description),
+  // like the rune picker — used for growth ranks so the special curves explain
+  // themselves in the dropdown.
+  function listPickerControl(abs, w, group, label, items, fmt) {
+    const d = document.createElement('div'); d.className = 'fld';
+    const cur = rd(abs, w), dirty = cur !== rdOrig(abs, w);
+    d.innerHTML = `<label>${escapeHtml(label)}${dirty ? '<button class="revert" title="revert" type="button">↺</button>' : ''}</label>
+      <button class="pick" type="button">${escapeHtml(fmt(cur))}</button>`;
+    if (dirty) d.classList.add('chg');
+    d.querySelector('.pick').onclick = () => openPicker({
+      title: label, items, current: cur, allowEmpty: false,
+      onPick: (id) => { wrVal(abs, w, id); reconcileEdit(abs, w, group, label, fmt); rerender(); },
+    });
+    if (dirty) d.querySelector('.revert').onclick = () => { wrVal(abs, w, rdOrig(abs, w)); reconcileEdit(abs, w, group, label, fmt); rerender(); };
+    return d;
+  }
+
   function rerender() { setView(D.view); }
 
   function grid(children) { const g = document.createElement('div'); g.className = 'grid'; children.forEach((c) => g.appendChild(c)); return g; }
@@ -306,10 +323,13 @@
     const G = (kind) => F.filter((f) => f.kind === kind);
     const grp = (name) => 'char:' + c.name + ':' + name;
 
-    // Growth ranks
+    // Growth ranks — searchable picker with per-rank descriptions (incl. the
+    // "special" non-linear growth curves).
     host.appendChild(section('Growth ranks'));
-    const rankOpts = Object.keys(D.schema.growth_ranks).map((k) => ({ v: +k, t: rankLabel(+k) }));
-    host.appendChild(grid(G('rank').map((f) => selectControl(base + f.offset, f.w, grp('growth'), f.label, rankOpts, rankLabel))));
+    const notes = D.schema.growth_rank_notes || {};
+    const rankItems = Object.keys(D.schema.growth_ranks).map((k) => ({ id: +k, label: rankLabel(+k), desc: notes[k] || '' }))
+      .sort((a, b) => a.id - b.id);
+    host.appendChild(grid(G('rank').map((f) => listPickerControl(base + f.offset, f.w, grp('growth'), f.label, rankItems, rankLabel))));
 
     // Weapon
     host.appendChild(section('Weapon'));

@@ -14,6 +14,20 @@
   "11": "S (special)",
   "12": "SS+ (special)"
  },
+ "growth_rank_notes": {
+  "1": "Weakest. +0-1 per level (~42% chance of +1).",
+  "2": "+0-1 per level (~60% chance of +1).",
+  "3": "+0-1 per level (~78% chance of +1).",
+  "4": "+1-2 per level (~4% chance of +2).",
+  "5": "+1-2 per level (~10% chance of +2).",
+  "6": "+1-2 per level (~32% chance of +2).",
+  "7": "+1-2 per level (~57% chance of +2).",
+  "8": "Strongest normal. +1-2 per level (~75% chance of +2).",
+  "9": "Special curve: faster until Lv7, slower after Lv30 -> about a regular C by Lv50.",
+  "10": "Special curve: faster until Lv7 -> about a regular B or S by Lv50.",
+  "11": "Special curve: extra growth after Lv10 and Lv30 -> about a regular S by Lv50.",
+  "12": "Special curve: extra growth after Lv10 and Lv30 -> slightly above a regular SS by Lv50."
+ },
  "elements": {
   "0": "None",
   "1": "Fire",

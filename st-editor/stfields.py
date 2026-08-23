@@ -32,6 +32,24 @@ GROWTH_RANKS = {
     0x0B: "S (special)", 0x0C: "SS+ (special)",
 }
 
+# Human explanation per rank (HexEditing.rtf / Wolkendrache "Stat Growth
+# Examination"). Plain ranks are flat per-level gains; 0x09-0x0C are non-linear
+# growth curves that only approximate a rank by Lv50.
+GROWTH_RANK_NOTES = {
+    0x01: "Weakest. +0-1 per level (~42% chance of +1).",
+    0x02: "+0-1 per level (~60% chance of +1).",
+    0x03: "+0-1 per level (~78% chance of +1).",
+    0x04: "+1-2 per level (~4% chance of +2).",
+    0x05: "+1-2 per level (~10% chance of +2).",
+    0x06: "+1-2 per level (~32% chance of +2).",
+    0x07: "+1-2 per level (~57% chance of +2).",
+    0x08: "Strongest normal. +1-2 per level (~75% chance of +2).",
+    0x09: "Special curve: faster until Lv7, slower after Lv30 -> about a regular C by Lv50.",
+    0x0A: "Special curve: faster until Lv7 -> about a regular B or S by Lv50.",
+    0x0B: "Special curve: extra growth after Lv10 and Lv30 -> about a regular S by Lv50.",
+    0x0C: "Special curve: extra growth after Lv10 and Lv30 -> slightly above a regular SS by Lv50.",
+}
+
 # Number of weapon-growth levels documented (offsets 0x0C..0x13, doc bytes 0D-14).
 WEAPON_GROWTH_LEVELS = 8
 WEAPON_GROWTH_OFFSET = 0x0C
