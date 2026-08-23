@@ -50,6 +50,8 @@
       chars.forEach((c) => { if (seen[c.name]) { const note = (c.doc_note || '').trim().replace(/[()]/g, '') || 'alt'; c.name = `${c.name} (${note})`; } seen[c.name] = true; });
       D.chars = chars; D.tables = tables; D.schema = schema; D.itemNames = itemNames;
       D.maps = { weapon_types, runes, rune_orbs, skills, enemies, character_names: charNames };
+      // optional: per-location shop stock, for best-effort shop identification
+      try { D.shopLocs = await loadJSON(base + 'st_shop_locations.json'); } catch (e) { D.shopLocs = {}; }
     })();
     return dataPromise;
   }
@@ -326,9 +328,14 @@
     const mv = F.find((f) => f.key === 'move'); if (mv) re.push(numControl(base + mv.offset, 1, grp('misc'), mv.label, 0, 255));
     host.appendChild(grid(re));
 
-    // Skills (0..rank_max)
-    host.appendChild(section('Battle skill affinities (0 = off)'));
-    host.appendChild(grid(G('skillrank').map((f) => numControl(base + f.offset, f.w, grp('skills'), f.label, 0, D.schema.skill_block.rank_max))));
+    // Skills — affinity uses the game's rank ladder (HexEditing.rtf: 01=F..08=SS;
+    // guide confirms skill levels are lettered E..S). 0 = off, 1..7 = F..S.
+    host.appendChild(section('Battle skill affinities (rank the character has)'));
+    const skillOpts = [{ v: 0, t: 'off' }].concat(
+      Object.keys(D.schema.growth_ranks).map(Number).filter((k) => k >= 1 && k <= D.schema.skill_block.rank_max)
+        .sort((a, b) => a - b).map((k) => ({ v: k, t: rankLabel(k) })));
+    const skillFmt = (v) => (v ? rankLabel(v) : 'off');
+    host.appendChild(grid(G('skillrank').map((f) => selectControl(base + f.offset, f.w, grp('skills'), f.label, skillOpts, skillFmt))));
 
     // Extra u16 (unconfirmed) — collapsible
     const extras = G('u16');
@@ -412,6 +419,27 @@
 
     const recOff = t.base + D.tableId * t.stride;
     const grp = `table:${name}:${D.tableId}`;
+
+    // best-effort shop identification: match this record's live item list against
+    // each location's guide stock (the shop table has no name field).
+    if (name === 'shop' && D.shopLocs && Object.keys(D.shopLocs).length) {
+      const have = new Set();
+      t.fields.forEach((f) => { if (fieldRef(f.label) === 'item') { const v = rd(recOff + f.off, f.w); if (v) have.add(v); } });
+      if (have.size) {
+        let best = null;
+        for (const [loc, ids] of Object.entries(D.shopLocs)) {
+          let hit = 0; for (const v of have) if (ids.includes(v)) hit++;
+          const frac = hit / have.size;
+          if (!best || frac > best.frac) best = { loc, frac };
+        }
+        if (best && best.frac >= 0.5) {
+          const p = document.createElement('div'); p.className = 'fnote'; p.style.marginBottom = '6px';
+          p.textContent = `Likely ${best.loc}'s shop (${Math.round(best.frac * 100)}% of its ${have.size} items match this location's guide stock — inferred).`;
+          host.appendChild(p);
+        }
+      }
+    }
+
     host.appendChild(grid(t.fields.map((f) => {
       const ref = fieldRef(f.label);
       if (ref) return tblPicker(recOff + f.off, f.w, grp, f.label, ref);

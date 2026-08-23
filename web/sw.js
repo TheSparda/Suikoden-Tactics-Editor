@@ -42,6 +42,7 @@ const SHELL = [
   // reference-data enrichment (optional — missing files just hide notes)
   '../st-editor/data/st_rune_ref.json',
   '../st-editor/data/st_item_ref.json',
+  '../st-editor/data/st_shop_locations.json',
 ];
 
 self.addEventListener('install', (e) => {
