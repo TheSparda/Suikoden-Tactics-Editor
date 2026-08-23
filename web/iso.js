@@ -350,12 +350,17 @@
 
     // Skills — affinity uses the game's rank ladder (HexEditing.rtf: 01=F..08=SS;
     // guide confirms skill levels are lettered E..S). 0 = off, 1..7 = F..S.
+    // Searchable picker with proficiency notes, like the growth ranks.
     host.appendChild(section('Battle skill affinities (rank the character has)'));
-    const skillOpts = [{ v: 0, t: 'off' }].concat(
+    const affNote = (k) => {
+      const L = rankLabel(k);
+      return L === 'F' ? 'Proficiency F — lowest.' : L === 'S' ? 'Proficiency S — highest.' : 'Proficiency ' + L + '.';
+    };
+    const affItems = [{ id: 0, label: 'off', desc: "Not learned — the character can't use this skill." }].concat(
       Object.keys(D.schema.growth_ranks).map(Number).filter((k) => k >= 1 && k <= D.schema.skill_block.rank_max)
-        .sort((a, b) => a - b).map((k) => ({ v: k, t: rankLabel(k) })));
+        .sort((a, b) => a - b).map((k) => ({ id: k, label: rankLabel(k), desc: affNote(k) })));
     const skillFmt = (v) => (v ? rankLabel(v) : 'off');
-    host.appendChild(grid(G('skillrank').map((f) => selectControl(base + f.offset, f.w, grp('skills'), f.label, skillOpts, skillFmt))));
+    host.appendChild(grid(G('skillrank').map((f) => listPickerControl(base + f.offset, f.w, grp('skills'), f.label, affItems, skillFmt))));
 
     // Extra u16 (unconfirmed) — collapsible
     const extras = G('u16');

@@ -77,7 +77,15 @@ select{appearance:none;
   background-position:calc(100% - 15px) 15px,calc(100% - 10px) 15px;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:28px}
 input:focus,select:focus{outline:0;border-color:var(--gold);box-shadow:0 0 0 3px var(--focusring)}
 input:hover:not(:focus),select:hover:not(:focus){border-color:var(--gold)}
-input[type=checkbox]{width:20px;height:20px;accent-color:var(--gold)}
+input[type=checkbox]{width:20px;height:20px;accent-color:var(--gold);cursor:pointer}
+/* comfortable filter/search box (16px stops iOS zoom-on-focus) */
+input.search{min-height:44px;padding:10px 14px;font-size:16px;border-radius:8px;width:100%}
+/* chip-style clickable toggle (checkbox + label together) */
+.toggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap;user-select:none;
+  color:var(--ink);font-size:13px;padding:9px 14px;min-height:44px;border:1px solid var(--line);border-radius:999px;background:var(--input-bg);transition:.12s}
+.toggle:hover{border-color:var(--gold)}
+.toggle input{width:18px;height:18px;margin:0}
+.toggle:has(input:checked){border-color:var(--gold);color:var(--acc2);background:color-mix(in srgb,var(--gold) 12%,transparent)}
 /* changed-from-loaded highlight */
 input.chg,select.chg,.fld input.chg,.fld select.chg{color:var(--chg);border-color:var(--warnbd);background:var(--changed-bg);box-shadow:none}
 .fld.chg>label{color:var(--chg)}

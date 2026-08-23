@@ -106,9 +106,9 @@
 
   <div class="card">
    <h3 class="sub-h" style="margin-top:0">Inventory</h3>
-   <div class="row">
-    <div style="flex:1"><label>Filter</label><input id="invFilter" placeholder="item name or id"></div>
-    <div><label>Show empty slots</label><br><input id="invEmpty" type="checkbox" style="width:22px;height:22px"></div>
+   <div class="row" style="align-items:center;gap:14px">
+    <div style="flex:1;min-width:200px"><input id="invFilter" class="search" type="search" placeholder="🔍  Filter by item name or id…"></div>
+    <label class="toggle"><input id="invEmpty" type="checkbox"><span>Show empty slots</span></label>
    </div>
    <div style="max-height:340px;overflow:auto;margin-top:8px">
     <table><thead><tr><th>Slot</th><th>Item</th><th>Qty</th><th></th></tr></thead><tbody id="invBody"></tbody></table>
