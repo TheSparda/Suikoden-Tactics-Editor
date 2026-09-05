@@ -1,13 +1,13 @@
 """Pyodide glue for the Suikoden Tactics web save editor.
 
-Runs entirely in the browser (CPython-in-WASM). It reuses the *desktop* editor's
-save modules unchanged — stsaveio / stsaveedit / stsavefields / stsave — feeding
-them a path in Pyodide's in-memory filesystem. Nothing is uploaded: the uploaded
-save is written to /save.bin, decoded, edited, and the result is read back out of
-the in-memory FS and handed to the browser as a download.
+Runs entirely in the browser (CPython-in-WASM). It reuses the project's save
+modules unchanged — stsaveio / stsaveedit / stsavefields / stsave — feeding them
+a path in Pyodide's in-memory filesystem. Nothing is uploaded: the uploaded save
+is written to /save.bin, decoded, edited, and the result is read back out of the
+in-memory FS and handed to the browser as a download.
 
-Mirrors the desktop server's _save_open / _save_state / _save_write handlers
-(steditor.py) so the field logic and checksum handling stay identical.
+The _save_open / _save_state / _save_write handlers keep the field logic and
+checksum handling identical to the underlying stsave* modules.
 """
 import json, os
 
