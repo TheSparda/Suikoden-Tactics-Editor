@@ -432,95 +432,100 @@
   ]
  },
  "skills": {
-  "base": 56962592,
+  "base": 56962576,
   "stride": 88,
-  "count": 128,
+  "count": 36,
   "id_list": "skills",
   "fields": [
    {
-    "off": 0,
+    "off": 16,
     "w": 2,
-    "label": "How strong (E)"
+    "label": "Rank E effect A"
    },
    {
-    "off": 2,
+    "off": 18,
     "w": 2,
-    "label": "How strong (E, secondary)"
-   },
-   {
-    "off": 12,
-    "w": 2,
-    "label": "How strong (D)"
-   },
-   {
-    "off": 14,
-    "w": 2,
-    "label": "How strong (D, secondary)"
+    "label": "Rank E effect B"
    },
    {
     "off": 20,
     "w": 2,
-    "label": "D upgrade SP cost"
+    "label": "Rank E SP cost"
    },
    {
-    "off": 24,
+    "off": 28,
     "w": 2,
-    "label": "How strong (C)"
+    "label": "Rank D effect A"
    },
    {
-    "off": 26,
+    "off": 30,
     "w": 2,
-    "label": "How strong (C, secondary)"
+    "label": "Rank D effect B"
    },
    {
     "off": 32,
     "w": 2,
-    "label": "C upgrade SP cost"
+    "label": "Rank D upgrade SP cost"
    },
    {
-    "off": 36,
+    "off": 40,
     "w": 2,
-    "label": "How strong (B)"
+    "label": "Rank C effect A"
    },
    {
-    "off": 38,
+    "off": 42,
     "w": 2,
-    "label": "How strong (B, secondary)"
+    "label": "Rank C effect B"
    },
    {
     "off": 44,
     "w": 2,
-    "label": "B upgrade SP cost"
+    "label": "Rank C upgrade SP cost"
    },
    {
-    "off": 48,
+    "off": 52,
     "w": 2,
-    "label": "How strong (A)"
+    "label": "Rank B effect A"
    },
    {
-    "off": 50,
+    "off": 54,
     "w": 2,
-    "label": "How strong (A, secondary)"
+    "label": "Rank B effect B"
    },
    {
     "off": 56,
     "w": 2,
-    "label": "A upgrade SP cost"
+    "label": "Rank B upgrade SP cost"
    },
    {
-    "off": 60,
+    "off": 64,
     "w": 2,
-    "label": "How strong (S)"
+    "label": "Rank A effect A"
    },
    {
-    "off": 62,
+    "off": 66,
     "w": 2,
-    "label": "How strong (S, secondary)"
+    "label": "Rank A effect B"
    },
    {
     "off": 68,
     "w": 2,
-    "label": "S upgrade SP cost"
+    "label": "Rank A upgrade SP cost"
+   },
+   {
+    "off": 76,
+    "w": 2,
+    "label": "Rank S effect A"
+   },
+   {
+    "off": 78,
+    "w": 2,
+    "label": "Rank S effect B"
+   },
+   {
+    "off": 80,
+    "w": 2,
+    "label": "Rank S upgrade SP cost"
    }
   ]
  },
@@ -649,6 +654,62 @@
     "off": 205,
     "w": 1,
     "label": "Attack Power"
+   }
+  ]
+ },
+ "runes": {
+  "base": 56548224,
+  "stride": 24,
+  "count": 60,
+  "id_list": null,
+  "fields": [
+   {
+    "off": 4,
+    "w": 2,
+    "label": "Value"
+   },
+   {
+    "off": 18,
+    "w": 1,
+    "label": "Level 1 spell (ability id)"
+   },
+   {
+    "off": 19,
+    "w": 1,
+    "label": "Level 2 spell (ability id)"
+   },
+   {
+    "off": 20,
+    "w": 1,
+    "label": "Level 3 spell (ability id)"
+   },
+   {
+    "off": 21,
+    "w": 1,
+    "label": "Level 4 spell (ability id)"
+   }
+  ]
+ },
+ "abilities": {
+  "base": 56690144,
+  "stride": 80,
+  "count": 221,
+  "id_list": null,
+  "fields": [
+   {
+    "off": 68,
+    "w": 2,
+    "label": "Power"
+   },
+   {
+    "off": 58,
+    "w": 2,
+    "label": "Element"
+   },
+   {
+    "off": 56,
+    "w": 2,
+    "label": "Effect class"
    }
   ]
  }

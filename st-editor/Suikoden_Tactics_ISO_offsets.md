@@ -154,6 +154,52 @@ S3's (S3 had one at file 0x3EC2A0, 94 records × 0x20). For ST:
   pinpoint. Conclusion: the spell table can't be located from these guides;
   differential testing (or a byte-offset hacking doc) is required.
 
+### Rune + ability tables — FOUND and editor-wired (2026-11-15) — supersedes the two sections above
+The Aug verdicts above ("spell defs are NOT raw in the ISO", "table location
+unknown") are **wrong**; both tables are plain, uncompressed disc data inside
+FILEDATA's database segment, which sits verbatim in EE RAM from boot
+(RAM = ISO − 0x2A45680). They were found by searching the RAM dumps for the
+ability TEXT stream first (glyph encoding: u16 words, 0x8Axx = ASCII,
+0xC400 = space, units end C100 FFFF), then solving the numeric table from
+its string-index triples. Full detail: suikodentactics-debug/re/RE_NOTES.md
+rounds 3–4.
+
+- **Rune table @ ISO 0x35EDB80, 60 records × 24 bytes.** +0x00/+0x02 =
+  (name, desc) unit pair (2k, 2k+1) into the rune text stream @ 0x35EF78A;
+  +0x04 = value; +0x08 = packed field, semantics unknown (not exposed);
+  **+0x12..+0x15 = the four ability ids the rune grants** (u8, 0 = none).
+  Linkage verified against the ability table (elemental families exact;
+  advanced runes share the basic rune's ladder shifted up; sword runes
+  borrow elemental spells for levels 1–2; RoP lists (31, 33, 34, 35),
+  skipping Double-Edged Sword 32 — observed, unexplained).
+- **Ability table @ ISO 0x36105E0, 221 records × 80 bytes** (rune spells,
+  techniques, unite attacks, enemy abilities). +0x30 = (name, short, long)
+  text-unit triple (3n, 3n+1, 3n+2) into the abilities text stream
+  @ 0x361EA74; **+0x44 = power** (u16), verified against the text stream's
+  own "Effect: Power N" lines; heals store heal power. Three records
+  disagree with their text (Furious Blow 110 vs 100, Double-Edged Sword
+  30 vs 10, Everlasting Mercy 0) — flagged in the UI as untested.
+  **Round 5 (2026-11-15): +0x3A = element** (u16; char-record codes
+  1 Fire, 5 Water, 2 Wind, 3 Earth, 4 Lightning, 9 Punishment — perfect
+  family blocks) and **+0x38 = effect class** (u16; 0x0101 terrain
+  change, 0x0401 standard, 0x1601 terrain-wide, 0x1801 death, 0x1901
+  random panels) — both editor-exposed. **Range, area/radius and casting
+  speed are provably NOT fields of this record** (difference-set proof
+  against guide + text ground truth; see RE_NOTES round 5) — they live
+  in the effect data the record references. The editor shows verified
+  range/area/speed as read-only reference data in st_rune_spells.json
+  ("ref" per ability: speed from the game's own "Casting time:" text,
+  range/area from the Neoseeker rune guide v1.6 cross-checked).
+- **Skills table base corrected: 0x3652E10** (the V11 framing 0x3652E20
+  was +0x10 off), 36 records × 0x58: string pair (2k, 2k+1), then 6 rank
+  tiers × 12 bytes (effect A/B/C + SP cost; the rank-E tier's cost slot
+  holds its C value, so only ranks D–S have SP costs).
+- Editor wiring: `st_tables.json` gained `runes` + `abilities` and the
+  corrected `skills`; names/descriptions are decoded from the game's own
+  text streams by `build_rune_spells.py` into `data/st_rune_spells.json`;
+  the web editor has Runes and Spells tabs (spell-assignment pickers,
+  value, power) on top of the generic table machinery.
+
 ### Open questions / to verify
 - Exact per-field byte offsets within each record (parser saw explicit re-seeks;
   pull literal offsets from each table's patch/write method).

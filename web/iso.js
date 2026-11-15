@@ -52,6 +52,9 @@
       D.maps = { weapon_types, runes, rune_orbs, skills, enemies, character_names: charNames };
       // optional: per-location shop stock, for best-effort shop identification
       try { D.shopLocs = await loadJSON(base + 'st_shop_locations.json'); } catch (e) { D.shopLocs = {}; }
+      // optional: rune + ability names decoded from the game's own text streams
+      // (build_rune_spells.py) — powers the Runes / Spells views
+      try { D.runeSpells = await loadJSON(base + 'st_rune_spells.json'); } catch (e) { D.runeSpells = { runes: {}, abilities: {} }; }
     })();
     return dataPromise;
   }
@@ -217,7 +220,8 @@
   function buildViewTabs() {
     const tabs = [
       ['chars', 'Characters'], ['items', 'Items'], ['shop', 'Shops'], ['runeshop', 'Rune shops'],
-      ['itemprice', 'Prices'], ['skills', 'Skills'], ['enemies', 'Enemies'], ['ref', 'Reference'],
+      ['itemprice', 'Prices'], ['skills', 'Skills'], ['runes', 'Runes'], ['abilities', 'Spells'],
+      ['enemies', 'Enemies'], ['ref', 'Reference'],
     ].filter(([k]) => k === 'chars' || k === 'ref' || D.tables[k]);
     $('#isoViewTabs').innerHTML = tabs.map(([k, l]) =>
       `<button class="viewtab${k === D.view ? ' active' : ''}" data-view="${k}">${l}</button>`).join('');
@@ -228,6 +232,7 @@
     $$('#isoViewTabs .viewtab').forEach((b) => b.classList.toggle('active', b.dataset.view === v));
     if (v === 'chars') renderChars();
     else if (v === 'ref') renderReference();
+    else if (v === 'runes') renderRunes();
     else renderTable(v);
   }
 
@@ -374,6 +379,63 @@
     }
   }
 
+  /* ------------------------------------------------------------- runes -----
+   * Rune records (ISO 0x35EDB80, 60 x 24 bytes, RE 2026-11-15): +0x00/+0x02
+   * are (name, description) text-stream indices — the names shown here come
+   * from that stream via st_rune_spells.json; +0x04 is the rune's value;
+   * +0x12..+0x15 are the four ability ids the rune grants, one per spell
+   * level (0 = no spell at that level). The packed field at +0x08 is not
+   * understood yet, so it is deliberately not exposed. */
+  // Range / area / casting-speed reference line for an ability (RE round 5,
+  // 2026-11-15): these are verified values (the game's own data sheets for
+  // speed; the Neoseeker rune guide cross-checked against them for range and
+  // area) shown read-only — they are NOT fields of the ability record.
+  function refLine(a) {
+    const r = (a && a.ref) || {};
+    const parts = [];
+    if (r.range) parts.push(`Range ${r.range}`);
+    if (r.area) parts.push(`Area ${r.area}${/^\d+$/.test(r.area) ? ' panels' : ''}`);
+    if (r.speed) parts.push(`Casting ${r.speed}`);
+    return parts.join(' · ');
+  }
+  function abilityItems() {
+    const ab = (D.runeSpells && D.runeSpells.abilities) || {};
+    const items = [{ id: 0, label: '— none —', desc: 'No spell/technique at this level.' }];
+    Object.keys(ab).map(Number).filter((n) => n > 0).sort((a, b) => a - b)
+      .forEach((n) => {
+        const a = ab[String(n)], rl = refLine(a);
+        items.push({ id: n, label: a.name || `Ability ${n}`, desc: (a.desc || '') + (rl ? ` [${rl}]` : '') });
+      });
+    return items;
+  }
+  function abilityLabel(v) {
+    if (!v) return '— none —';
+    const a = (D.runeSpells && D.runeSpells.abilities[String(v)]) || {};
+    return a.name || `Ability ${v}`;
+  }
+  function renderRunes() {
+    const host = $('#isoView'); host.innerHTML = '';
+    const t = D.tables.runes; if (!t) { host.textContent = 'No rune table.'; return; }
+    if (D.tableId >= t.count) D.tableId = 0;
+    const id = D.tableId, recOff = t.base + id * t.stride, grp = `table:runes:${id}`;
+    const info = (D.runeSpells && D.runeSpells.runes[String(id)]) || {};
+    const sel = document.createElement('div'); sel.className = 'row';
+    sel.innerHTML = `<div style="flex:1;min-width:220px"><label>Rune</label>
+      <select id="isoRuneSel">${Array.from({ length: t.count }, (_, i) => `<option value="${i}"${i === id ? ' selected' : ''}>${escapeHtml(tableRowName('runes', i))}</option>`).join('')}</select></div>
+      <div class="muted" style="align-self:end">@0x${recOff.toString(16).toUpperCase()} · stride 0x${t.stride.toString(16).toUpperCase()}</div>`;
+    host.appendChild(sel);
+    sel.querySelector('#isoRuneSel').onchange = (e) => { D.tableId = +e.target.value; renderRunes(); };
+    if (info.desc) { const p = document.createElement('div'); p.className = 'fnote'; p.style.marginBottom = '6px'; p.textContent = info.desc; host.appendChild(p); }
+    const p2 = document.createElement('div'); p2.className = 'fnote'; p2.style.marginBottom = '6px';
+    p2.textContent = 'Pick which spell or technique the rune grants at each level. Advanced runes (Rage, Flowing…) share the basic rune\'s ladder shifted up — that is the game\'s own data, not a display merge.';
+    host.appendChild(p2);
+    const kids = [numControl(recOff + 4, 2, grp, 'Value', 0, 65535)];
+    for (let lv = 0; lv < 4; lv++) {
+      kids.push(listPickerControl(recOff + 0x12 + lv, 1, grp, `Level ${lv + 1} spell`, abilityItems(), abilityLabel));
+    }
+    host.appendChild(grid(kids));
+  }
+
   // Record-id → English name. Name maps are 3-digit DECIMAL-keyed and the table
   // record index equals the name id (RE-verified: itemprice rec_id 1 = Medicine,
   // rec_id 2 = Mega Medicine). Shops/rune-shops have no name table.
@@ -382,6 +444,8 @@
     if (name === 'items' || name === 'itemprice') return itemName(id);
     if (name === 'skills') return decName('skills', id);
     if (name === 'enemies') return decName('enemies', id);
+    if (name === 'runes') return (D.runeSpells && D.runeSpells.runes[String(id)] || {}).name || '';
+    if (name === 'abilities') return (D.runeSpells && D.runeSpells.abilities[String(id)] || {}).name || '';
     return '';
   }
   function tableRowName(name, id) { const n = recordName(name, id); return n ? `${id} — ${n}` : `${id}`; }
@@ -443,6 +507,18 @@
       p.textContent = 'Each skill has ranks E→S. "How strong" = effect strength at that rank (higher = stronger); "secondary" = a second effect some skills add; "upgrade SP cost" = Skill Points needed to raise the skill to that rank.';
       host.appendChild(p);
     }
+    // ability (spell/technique) power — RE 2026-11-15: +0x44 verified against
+    // the game's own "Effect: Power N" description text for damage spells;
+    // heals store their heal power here.
+    if (name === 'abilities') {
+      const p = document.createElement('div'); p.className = 'fnote'; p.style.marginBottom = '6px';
+      p.textContent = 'Power = the spell/technique\'s strength value (damage for attacks, heal amount for heals). Three records disagree with their own description text (Furious Blow, Double-Edged Sword, Everlasting Mercy) — their real power lives in another field, so treat edits there as untested. Element uses the character-record codes (0 none, 1 Fire, 2 Wind, 3 Earth, 4 Lightning, 5 Water, 9 Punishment). Effect class: 257 = terrain change, 1025 = standard targeted, 5633 = terrain-wide, 6145 = instant death, 6401 = random panels.';
+      host.appendChild(p);
+      const ab = (D.runeSpells && D.runeSpells.abilities[String(D.tableId)]) || {};
+      if (ab.desc) { const p2 = document.createElement('div'); p2.className = 'fnote'; p2.style.marginBottom = '6px'; p2.textContent = ab.desc; host.appendChild(p2); }
+      const rl = refLine(ab);
+      if (rl) { const p3 = document.createElement('div'); p3.className = 'fnote'; p3.style.marginBottom = '6px'; p3.textContent = `${rl} (reference values — range, area and casting speed are not stored as plain fields in the ability record, so they are shown read-only)`; host.appendChild(p3); }
+    }
 
     const recOff = t.base + D.tableId * t.stride;
     const grp = `table:${name}:${D.tableId}`;
@@ -485,6 +561,8 @@
   function renderReference() {
     const host = $('#isoView'); host.innerHTML = '<small class="muted">Read-only id → name lists used while editing.</small>';
     const wrap = document.createElement('div');
+    const rs = D.runeSpells || { runes: {}, abilities: {} };
+    const flatNames = (o) => Object.fromEntries(Object.entries(o || {}).map(([k, v]) => [k, (v && v.name) || '']));
     wrap.innerHTML =
       refTable('Items', D.itemNames, false) +
       refTable('Skills', D.maps.skills, false) +
@@ -492,7 +570,9 @@
       refTable('Runes', D.maps.runes, true) +
       refTable('Weapon types', D.maps.weapon_types, true) +
       refTable('Rune orbs', D.maps.rune_orbs, true) +
-      refTable('Characters', D.maps.character_names, false);
+      refTable('Characters', D.maps.character_names, false) +
+      refTable('Runes — disc records', flatNames(rs.runes), false) +
+      refTable('Spells & abilities — disc records', flatNames(rs.abilities), false);
     host.appendChild(wrap);
   }
 

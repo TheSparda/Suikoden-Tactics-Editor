@@ -68,6 +68,30 @@ try:
     rec = ed.decode_table_record(name, 1)
     ok(rec["fields"][0]["value"] == 0x37, "table set/read round-trip (items id=1 @+0x00 = 0x37)")
 
+    # rune table (RE 2026-11-15): spell-assignment bytes round-trip
+    ed.set_table_field("runes", 1, 18, 1, 31, backup=False)   # Fire Rune L1 -> Eternal Ordeal
+    rec = ed.decode_table_record("runes", 1)
+    by_off = {f["off"]: f["value"] for f in rec["fields"]}
+    ok(by_off[18] == 31, "runes set/read round-trip (Fire L1 spell = 31)")
+
+    # ability table (RE 2026-11-15): power field round-trips
+    ed.set_table_field("abilities", 31, 0x44, 2, 999, backup=False)
+    rec = ed.decode_table_record("abilities", 31)
+    ok(rec["fields"][0]["value"] == 999, "abilities set/read round-trip (Eternal Ordeal power = 999)")
+
+    # ability element + effect class (RE round 5, 2026-11-15): the two other
+    # verified record fields round-trip at +0x3A / +0x38
+    ed.set_table_field("abilities", 25, 0x3A, 2, 3, backup=False)   # Lightning Force -> Earth
+    ed.set_table_field("abilities", 25, 0x38, 2, 257, backup=False)  # -> terrain-change class
+    rec = ed.decode_table_record("abilities", 25)
+    by_off = {f["off"]: f["value"] for f in rec["fields"]}
+    ok(by_off[0x3A] == 3 and by_off[0x38] == 257,
+       "abilities set/read round-trip (Lightning Force element = 3, effect class = 257)")
+
+    # skills table sits at the corrected base 0x3652E10 (V11 framing was +0x10)
+    ok(tables["skills"]["base"] == 0x3652E10 and tables["skills"]["count"] == 36,
+       "skills table base/count corrected (0x3652E10 x36)")
+
     # out-of-range rejected
     try:
         ed.set_field(kyril, "str_growth", 999, backup=False); ok(False, "rejects out-of-range u8")

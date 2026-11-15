@@ -1,0 +1,1443 @@
+{
+ "runes": {
+  "0": {
+   "name": "Dummy Rune",
+   "desc": "none"
+  },
+  "1": {
+   "name": "Fire Rune",
+   "desc": "Magic Rune that enables fire magic."
+  },
+  "2": {
+   "name": "Rage Rune",
+   "desc": "Magic Rune that enables more powerful fire magic."
+  },
+  "3": {
+   "name": "Water Rune",
+   "desc": "Magic Rune that enables water magic."
+  },
+  "4": {
+   "name": "Flowing Rune",
+   "desc": "Magic Rune that enables more powerful water magic."
+  },
+  "5": {
+   "name": "Wind Rune",
+   "desc": "Magic Rune that enables wind magic."
+  },
+  "6": {
+   "name": "Cyclone Rune",
+   "desc": "Magic Rune that enables more powerful wind magic."
+  },
+  "7": {
+   "name": "Earth Rune",
+   "desc": "Magic Rune that enables earth magic."
+  },
+  "8": {
+   "name": "Mother Earth Rune",
+   "desc": "Magic Rune that enables more powerful earth magic."
+  },
+  "9": {
+   "name": "Lightning Rune",
+   "desc": "Magic Rune that enables lightning magic."
+  },
+  "10": {
+   "name": "Thunder Rune",
+   "desc": "Magic Rune that enables more powerful lightning magic."
+  },
+  "11": {
+   "name": "Rune of Punishment",
+   "desc": "Rune governing atonement and forgiveness."
+  },
+  "12": {
+   "name": "Swallow Rune",
+   "desc": "Special Skill Rune for Kyril."
+  },
+  "13": {
+   "name": "Red Rose Rune",
+   "desc": "Magnificent Skill Rune for Reinbach."
+  },
+  "14": {
+   "name": "Shrike Rune",
+   "desc": "Special Skill Rune for Mizuki."
+  },
+  "15": {
+   "name": "Falcon Rune",
+   "desc": "Special Skill Rune for Kika."
+  },
+  "16": {
+   "name": "Hawk Rune",
+   "desc": "Special Skill Rune for archery."
+  },
+  "17": {
+   "name": "Unicorn Rune",
+   "desc": "Special Skill Rune for spear-fighting."
+  },
+  "18": {
+   "name": "Viper Rune",
+   "desc": "Special Skill Rune for one-handed-sword users."
+  },
+  "19": {
+   "name": "Titan Rune",
+   "desc": "Special Skill Rune for great-sword users."
+  },
+  "20": {
+   "name": "Lion Rune",
+   "desc": "Special Skill Rune for claw users."
+  },
+  "21": {
+   "name": "Eagle Rune",
+   "desc": "Special Skill Rune for missile-weapon users."
+  },
+  "22": {
+   "name": "Gozz Rune",
+   "desc": "Special Skill Rune for axe users."
+  },
+  "23": {
+   "name": "White Tiger Rune",
+   "desc": "Special Skill Rune for hand-to-hand users."
+  },
+  "24": {
+   "name": "Rage Sword Rune",
+   "desc": "A Skill Rune that enables use of the Sword of Rage."
+  },
+  "25": {
+   "name": "Flowing Sword Rune",
+   "desc": "A Skill Rune that enables use of the Flowing Sword."
+  },
+  "26": {
+   "name": "Cyclone Sword Rune",
+   "desc": "A Skill Rune that enables use of the Cyclone Sword."
+  },
+  "27": {
+   "name": "Thunder Sword Rune",
+   "desc": "A Skill Rune that enables use of the Sword of Thunder."
+  },
+  "28": {
+   "name": "M. Earth Sword Rune",
+   "desc": "A Skill Rune that enables use of the Mother Earth Sword."
+  },
+  "29": {
+   "name": "Kangacorn Rune",
+   "desc": "Special Skill Rune for use while riding Kangacorns."
+  },
+  "30": {
+   "name": "Giant Owl Rune",
+   "desc": "Special Skill Rune for use while riding Giant Owls."
+  },
+  "31": {
+   "name": "Chameleon Rune",
+   "desc": "Changes favored element daily (Mitsuba only)."
+  },
+  "32": {
+   "name": "Violence Rune",
+   "desc": "Berserk state + increased PDF/MDF when HP falls to 1/2."
+  },
+  "33": {
+   "name": "Killer Rune",
+   "desc": "Increases chance of a critical hit."
+  },
+  "34": {
+   "name": "Counter Rune",
+   "desc": "Increases chances of dodging and counterattacking."
+  },
+  "35": {
+   "name": "Gale Rune",
+   "desc": "Boosts Speed."
+  },
+  "36": {
+   "name": "Sunbeam Rune",
+   "desc": "Heals small amount of HP after owner's turn ends."
+  },
+  "37": {
+   "name": "Drain Rune",
+   "desc": "Heals HP when owner scores a critical hit."
+  },
+  "38": {
+   "name": "Skunk Rune",
+   "desc": "Decreases chance of being targeted by enemies."
+  },
+  "39": {
+   "name": "Firefly Rune",
+   "desc": "Lures enemies to target this unit first (Eugene only)."
+  },
+  "40": {
+   "name": "Rune of Balance",
+   "desc": "Negates unbalance during battle."
+  },
+  "41": {
+   "name": "Warrior Rune",
+   "desc": "Converts 1/2 of Physical Defense to Strength."
+  },
+  "42": {
+   "name": "Wizard Rune",
+   "desc": "Converts 1/2 of Magic Defense to Magic."
+  },
+  "43": {
+   "name": "Prosperity Rune",
+   "desc": "Increases amount of Potch gained from defeated units."
+  },
+  "44": {
+   "name": "Fortune Rune",
+   "desc": "Increases amount of experience and skill points gained."
+  },
+  "45": {
+   "name": "Hunter's Rune",
+   "desc": "Lowers Attack but makes enemies always drop an item."
+  },
+  "46": {
+   "name": "Champion's Rune",
+   "desc": "Decreases chance of encountering weak enemies."
+  },
+  "47": {
+   "name": "Mischief Rune",
+   "desc": "When stealing, causes status ailment in victim (Noah only)."
+  },
+  "48": {
+   "name": "Bucket Rune",
+   "desc": "Chance of enemy getting bucket over head when hit."
+  },
+  "49": {
+   "name": "Balloon Rune",
+   "desc": "Chance of enemy getting a balloon attached when hit."
+  },
+  "50": {
+   "name": "Silence Rune",
+   "desc": "Chance of enemy getting silenced when a hit is scored."
+  },
+  "51": {
+   "name": "Charm Rune",
+   "desc": "Charms all allies (Jeane only)."
+  },
+  "52": {
+   "name": "Rune of Punishment",
+   "desc": "Rune governing atonement and forgiveness."
+  },
+  "53": {
+   "name": "Rune factice",
+   "desc": "aucun"
+  },
+  "54": {
+   "name": "Rune de feu",
+   "desc": "Active le feu magique."
+  },
+  "55": {
+   "name": "Rune de feu violent",
+   "desc": "Rune de feu de classe suprieure."
+  },
+  "56": {
+   "name": "Rune d'eau",
+   "desc": "Active la magie d'eau."
+  },
+  "57": {
+   "name": "Rune eau ruisselante",
+   "desc": "Rune d'eau de classe suprieure."
+  },
+  "58": {
+   "name": "Rune de vent",
+   "desc": "Active la magie de vent."
+  },
+  "59": {
+   "name": "Rune de tourbillon",
+   "desc": "Rune de vent de classe suprieure."
+  }
+ },
+ "abilities": {
+  "0": {
+   "name": "Dummy Magic",
+   "desc": "None"
+  },
+  "1": {
+   "name": "Flame Force",
+   "desc": "Change terrain elements in affected areas to .",
+   "ref": {
+    "range": "4",
+    "area": "5",
+    "speed": "Instantaneous"
+   }
+  },
+  "2": {
+   "name": "Rage Force",
+   "desc": "Change terrain elements in affected areas to .",
+   "ref": {
+    "range": "4",
+    "area": "13",
+    "speed": "Instantaneous"
+   }
+  },
+  "3": {
+   "name": "Flaming Arrows",
+   "desc": "Deal fire-based damage to one unit.",
+   "ref": {
+    "range": "4",
+    "area": "1",
+    "speed": "Instantaneous"
+   }
+  },
+  "4": {
+   "name": "Blazing Wall",
+   "desc": "Damage units on .",
+   "ref": {
+    "range": "All",
+    "area": "All terrain",
+    "speed": "Fast"
+   }
+  },
+  "5": {
+   "name": "Explosion",
+   "desc": "Damage units within range.",
+   "ref": {
+    "range": "4",
+    "area": "13",
+    "speed": "Medium"
+   }
+  },
+  "6": {
+   "name": "Final Flame",
+   "desc": "Damage units within range.",
+   "ref": {
+    "range": "4",
+    "area": "13",
+    "speed": "Slow"
+   }
+  },
+  "7": {
+   "name": "Water Force",
+   "desc": "Change terrain elements in affected areas to .",
+   "ref": {
+    "range": "4",
+    "area": "5",
+    "speed": "Instantaneous"
+   }
+  },
+  "8": {
+   "name": "Flowing Force",
+   "desc": "Change terrain elements in affected areas to .",
+   "ref": {
+    "range": "4",
+    "area": "13",
+    "speed": "Instantaneous"
+   }
+  },
+  "9": {
+   "name": "Kindness Drops",
+   "desc": "Completely heal one unit's HP and status ailments.",
+   "ref": {
+    "range": "4",
+    "area": "1",
+    "speed": "Instantaneous"
+   }
+  },
+  "10": {
+   "name": "Breath of Ice",
+   "desc": "Damage units within range.",
+   "ref": {
+    "range": "4",
+    "area": "9",
+    "speed": "Fast"
+   }
+  },
+  "11": {
+   "name": "Kindness Rain",
+   "desc": "Heal HP and status ailments of units within range.",
+   "ref": {
+    "range": "4",
+    "area": "9",
+    "speed": "Medium"
+   }
+  },
+  "12": {
+   "name": "Silent Lake",
+   "desc": "Always silences enemy units within range.",
+   "ref": {
+    "range": "4",
+    "area": "49",
+    "speed": "Instantaneous"
+   }
+  },
+  "13": {
+   "name": "Wind Force",
+   "desc": "Change terrain elements in affected areas to .",
+   "ref": {
+    "range": "4",
+    "area": "5",
+    "speed": "Instantaneous"
+   }
+  },
+  "14": {
+   "name": "Cyclone Force",
+   "desc": "Change terrain elements in affected areas to .",
+   "ref": {
+    "range": "4",
+    "area": "13",
+    "speed": "Instantaneous"
+   }
+  },
+  "15": {
+   "name": "Wind of Sleep",
+   "desc": "Put units within range to sleep (sometimes!).",
+   "ref": {
+    "range": "6",
+    "area": "5",
+    "speed": "Instantaneous"
+   }
+  },
+  "16": {
+   "name": "Healing Wind",
+   "desc": "Heal HP of units within range.",
+   "ref": {
+    "range": "6",
+    "area": "5",
+    "speed": "Fast"
+   }
+  },
+  "17": {
+   "name": "The Shredding",
+   "desc": "Damage units within range.",
+   "ref": {
+    "range": "6",
+    "area": "13",
+    "speed": "Medium"
+   }
+  },
+  "18": {
+   "name": "Shining Wind",
+   "desc": "Heal allies and damage enemies that are on .",
+   "ref": {
+    "range": "All",
+    "area": "All terrain",
+    "speed": "Slow"
+   }
+  },
+  "19": {
+   "name": "Earth Force",
+   "desc": "Change terrain elements in affected areas to .",
+   "ref": {
+    "range": "4",
+    "area": "5",
+    "speed": "Instantaneous"
+   }
+  },
+  "20": {
+   "name": "Mother Earth Force",
+   "desc": "Change terrain elements in affected areas to .",
+   "ref": {
+    "range": "4",
+    "area": "13",
+    "speed": "Instantaneous"
+   }
+  },
+  "21": {
+   "name": "Clay Guardian",
+   "desc": "Increase PDF and MDF of units within range.",
+   "ref": {
+    "range": "4",
+    "area": "5",
+    "speed": "Instantaneous"
+   }
+  },
+  "22": {
+   "name": "Vengeful Child",
+   "desc": "Protection against Magic/Skills once (one ally).",
+   "ref": {
+    "range": "4",
+    "area": "1",
+    "speed": "Instantaneous"
+   }
+  },
+  "23": {
+   "name": "Earthquake",
+   "desc": "Deal damage to units within range 10 times randomly.",
+   "ref": {
+    "range": "4",
+    "area": "13",
+    "speed": "Slow"
+   }
+  },
+  "24": {
+   "name": "Canopy Defense",
+   "desc": "Protection against Magic/Skills once (nearby units).",
+   "ref": {
+    "range": "4",
+    "area": "13",
+    "speed": "Slow"
+   }
+  },
+  "25": {
+   "name": "Lightning Force",
+   "desc": "Change terrain elements in affected areas to .",
+   "ref": {
+    "range": "4",
+    "area": "5",
+    "speed": "Instantaneous"
+   }
+  },
+  "26": {
+   "name": "Thunder Force",
+   "desc": "Change terrain elements in affected areas to .",
+   "ref": {
+    "range": "4",
+    "area": "13",
+    "speed": "Instantaneous"
+   }
+  },
+  "27": {
+   "name": "Thunder Runner",
+   "desc": "Damage central unit and those around it.",
+   "ref": {
+    "range": "5",
+    "area": "5",
+    "speed": "Instantaneous"
+   }
+  },
+  "28": {
+   "name": "Berserk Blow",
+   "desc": "Damage one unit.",
+   "ref": {
+    "range": "5",
+    "area": "1",
+    "speed": "Fast"
+   }
+  },
+  "29": {
+   "name": "Heavenly Thunder",
+   "desc": "Damage units on .",
+   "ref": {
+    "range": "All",
+    "area": "All terrain",
+    "speed": "Slow"
+   }
+  },
+  "30": {
+   "name": "Furious Blow",
+   "desc": "Damage one unit.",
+   "ref": {
+    "range": "5",
+    "area": "1",
+    "speed": "Slow"
+   }
+  },
+  "31": {
+   "name": "Eternal Ordeal",
+   "desc": "Damage one unit.",
+   "ref": {
+    "range": "6",
+    "area": "1",
+    "speed": "Instantaneous"
+   }
+  },
+  "32": {
+   "name": "Double-Edged Sword",
+   "desc": "Deal damage to units within range 8 times randomly.",
+   "ref": {
+    "range": "6",
+    "area": "9",
+    "speed": "Fast"
+   }
+  },
+  "33": {
+   "name": "Voice of Death",
+   "desc": "Kill one unit (high probability).",
+   "ref": {
+    "range": "6",
+    "area": "1",
+    "speed": "Instantaneous"
+   }
+  },
+  "34": {
+   "name": "Everlasting Mercy",
+   "desc": "Heal allies and damage enemies within range.",
+   "ref": {
+    "range": "6",
+    "area": "25",
+    "speed": "Slow"
+   }
+  },
+  "35": {
+   "name": "Flying Swallow",
+   "desc": "Deal 0.8 x normal damage to one enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "36": {
+   "name": "Flying Swallow Cut",
+   "desc": "Deal 0.5 x normal damage to enemies within range.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "37": {
+   "name": "Flying Swallow Slash",
+   "desc": "Deal 3.0 x normal damage to one enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "38": {
+   "name": "Falcon Slash",
+   "desc": "Deal 1.2 x normal damage to one enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "39": {
+   "name": "Falcon Thrust",
+   "desc": "Deal 2.0 x normal damage to one enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "40": {
+   "name": "Falcon Storm Thrust",
+   "desc": "Deal 3.0 x normal damage to one enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "41": {
+   "name": "Shrike Impale",
+   "desc": "Impale one enemy for 1.0 x normal damage.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "42": {
+   "name": "Skull Thrust",
+   "desc": "Deal 1.5 x normal damage to one enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "43": {
+   "name": "Pile Driver",
+   "desc": "Deal 2.0 x normal damage to one enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "44": {
+   "name": "Red Rose Etude",
+   "desc": "Deal 1.0 x normal damage to one enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "45": {
+   "name": "Red Rose Minuet",
+   "desc": "Put units within range to sleep (sometimes!).",
+   "ref": {
+    "area": "12",
+    "speed": "Instantaneous"
+   }
+  },
+  "46": {
+   "name": "Red Rose Rondo",
+   "desc": "Deal 0.8 x normal damage to units within range.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "47": {
+   "name": "Shadow Weave",
+   "desc": "Inflict Shadow Weave on one enemy (sometimes!).",
+   "ref": {
+    "range": "2-3",
+    "speed": "Instantaneous"
+   }
+  },
+  "48": {
+   "name": "Strong Arm",
+   "desc": "Deal 1.5 x normal damage to one enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "49": {
+   "name": "Dance of the Hawk",
+   "desc": "Deal 1.0 x normal damage to units within range.",
+   "ref": {
+    "area": "20",
+    "speed": "Instantaneous"
+   }
+  },
+  "50": {
+   "name": "First Style",
+   "desc": "Deal 1.0 x normal damage to units within range.",
+   "ref": {
+    "area": "2 (line)",
+    "speed": "Instantaneous"
+   }
+  },
+  "51": {
+   "name": "Second Style",
+   "desc": "Deal 1.2 x normal damage to units within range.",
+   "ref": {
+    "area": "3 (line)",
+    "speed": "Instantaneous"
+   }
+  },
+  "52": {
+   "name": "Third Style",
+   "desc": "Deal 1.5 x normal damage to units within range.",
+   "ref": {
+    "area": "4 (line)",
+    "speed": "Instantaneous"
+   }
+  },
+  "53": {
+   "name": "Poison Slash",
+   "desc": "Deal 1.0 x normal damage to one enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "54": {
+   "name": "Viper Bite",
+   "desc": "Deal 1.0 x normal damage to one enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "55": {
+   "name": "Hydra",
+   "desc": "Deal 1.0 x normal damage to units within range.",
+   "ref": {
+    "area": "8 (around user)",
+    "speed": "Instantaneous"
+   }
+  },
+  "56": {
+   "name": "Giant's Hand",
+   "desc": "Deal 1.0 x normal damage to one enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "57": {
+   "name": "Giant's Foot",
+   "desc": "Deal 1.5 x normal damage to one enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "58": {
+   "name": "Giant's Roar",
+   "desc": "Deal 1.2 x normal damage to enemies in range.",
+   "ref": {
+    "area": "8 (around user)",
+    "speed": "Instantaneous"
+   }
+  },
+  "59": {
+   "name": "Piercing Claw",
+   "desc": "Deal 1.0 x normal damage to one enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "60": {
+   "name": "Shredding Claw",
+   "desc": "Deal 1.5 x normal damage to units within range.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "61": {
+   "name": "Beast King Claw",
+   "desc": "Deal 2.0 x normal damage to one enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "62": {
+   "name": "Clairvoyance",
+   "desc": "Attack with triple normal range.",
+   "ref": {
+    "range": "6",
+    "speed": "Instantaneous"
+   }
+  },
+  "63": {
+   "name": "Piercing Shot",
+   "desc": "Deal 1.5 x normal damage to enemies within range.",
+   "ref": {
+    "area": "4 (T-shape)",
+    "speed": "Instantaneous"
+   }
+  },
+  "64": {
+   "name": "Smoking Shot",
+   "desc": "Deal 1.0 x normal damage to units within range.",
+   "ref": {
+    "area": "12",
+    "speed": "Instantaneous"
+   }
+  },
+  "65": {
+   "name": "Helmet Split",
+   "desc": "Deal 1.5 x normal damage to one enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "66": {
+   "name": "Earth Split",
+   "desc": "Deal 0.5 x normal damage to units within range.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "67": {
+   "name": "Crush",
+   "desc": "Deal 2.0 x normal damage to one enemy."
+  },
+  "68": {
+   "name": "Gather Strength",
+   "desc": "Double the power of unit's next attack.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "69": {
+   "name": "Steel Curtain",
+   "desc": "Increase PDF by 50% until unit's next turn.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "70": {
+   "name": "Air Shot",
+   "desc": "Deal 2.0 x normal damage to units within range.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "71": {
+   "name": "Sword of Rage",
+   "desc": "Enter magic  sword state after attacking the enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "72": {
+   "name": "Flowing Sword",
+   "desc": "Enter magic  sword state after attacking the enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "73": {
+   "name": "Cyclone Sword",
+   "desc": "Enter magic  sword state after attacking the enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "74": {
+   "name": "Sword of Thunder",
+   "desc": "Enter magic  sword state after attacking the enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "75": {
+   "name": "Mother Earth Sword",
+   "desc": "Enter magic  sword state after attacking the enemy.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "76": {
+   "name": "Earth Guard",
+   "desc": "Not used"
+  },
+  "77": {
+   "name": "Rush",
+   "desc": "Impale one enemy for 2.0 x normal damage.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "78": {
+   "name": "Kangacorn Spirit",
+   "desc": "Cause temporary berserk, increased PDF/MDF.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "79": {
+   "name": "Wind Blade",
+   "desc": "Deal 0.5 x normal damage to units within range.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "80": {
+   "name": "Owl Heart",
+   "desc": "Cause temporary berserk, increased accuracy/dodging.",
+   "ref": {
+    "speed": "Instantaneous"
+   }
+  },
+  "81": {
+   "name": "Counter",
+   "desc": "Raise evasion for allies within range."
+  },
+  "82": {
+   "name": "Heal",
+   "desc": "Heal all HP and status ailments of one unit within range."
+  },
+  "83": {
+   "name": "First Aid",
+   "desc": "Restore some HP to all allies within range."
+  },
+  "84": {
+   "name": "Backup",
+   "desc": "Raise Attack and Accuracy of allies in range."
+  },
+  "85": {
+   "name": "Double Leader Attack",
+   "desc": "Damage one enemy."
+  },
+  "86": {
+   "name": "True Friends Attack",
+   "desc": "Damage one enemy."
+  },
+  "87": {
+   "name": "Double Sword Attack",
+   "desc": "Damage enemies within range."
+  },
+  "88": {
+   "name": "Ninja Attack",
+   "desc": "Damage one enemy."
+  },
+  "89": {
+   "name": "Pirate Attack",
+   "desc": "Damage one enemy."
+  },
+  "90": {
+   "name": "Family Attack",
+   "desc": "Damage one enemy."
+  },
+  "91": {
+   "name": "Cohort Attack",
+   "desc": "Damage enemies within range."
+  },
+  "92": {
+   "name": "Princess Attack",
+   "desc": "Damage enemies within range."
+  },
+  "93": {
+   "name": "Pirate Family Attack",
+   "desc": "Damage enemies within range."
+  },
+  "94": {
+   "name": "Love Love Attack",
+   "desc": "Damage enemies within range."
+  },
+  "95": {
+   "name": "Sibling Attack",
+   "desc": "Damage enemies within range."
+  },
+  "96": {
+   "name": "New Knight Attack",
+   "desc": "Damage enemies within range."
+  },
+  "97": {
+   "name": "Ice Crush Attack",
+   "desc": "Damage one enemy."
+  },
+  "98": {
+   "name": "Mounted Troop Attack",
+   "desc": "Damage enemies within range."
+  },
+  "99": {
+   "name": "Flying Troop Attack",
+   "desc": "Damage enemies within range."
+  },
+  "100": {
+   "name": "Adonis Attack",
+   "desc": "Damage enemies within range."
+  },
+  "101": {
+   "name": "Allure Attack",
+   "desc": "Damage enemies within range."
+  },
+  "102": {
+   "name": "Nymph Attack",
+   "desc": "Damage enemies within range."
+  },
+  "103": {
+   "name": "True Ninja Attack",
+   "desc": "Damage enemies within range."
+  },
+  "104": {
+   "name": "Meow Attack",
+   "desc": "Damage enemies within range and steal items from them."
+  },
+  "105": {
+   "name": "Barrage Attack",
+   "desc": "Damage enemies within range."
+  },
+  "106": {
+   "name": "Spear Attack",
+   "desc": "Damage enemies within range."
+  },
+  "107": {
+   "name": "Intolerable Attack",
+   "desc": "Damage enemies within range."
+  },
+  "108": {
+   "name": "Giant Sword Attack",
+   "desc": "Damage enemies within range."
+  },
+  "109": {
+   "name": "Obel Soldier Attack",
+   "desc": "Damage enemies within range."
+  },
+  "110": {
+   "name": "Dying Wish Attack",
+   "desc": "Damage enemies within range."
+  },
+  "111": {
+   "name": "Old Knight Attack",
+   "desc": "Damage enemies within range."
+  },
+  "112": {
+   "name": "Pirate Band Attack",
+   "desc": "Damage enemies within range."
+  },
+  "113": {
+   "name": "Sorcerer Attack",
+   "desc": "Damage enemies within range."
+  },
+  "114": {
+   "name": "Flame Array",
+   "desc": "Damage enemies within range."
+  },
+  "115": {
+   "name": "Thunder God",
+   "desc": "Damage one enemy; heal allies on  and ."
+  },
+  "116": {
+   "name": "Fierce Wind Fangs",
+   "desc": "Damage enemies within range."
+  },
+  "117": {
+   "name": "Water Dragon",
+   "desc": "Damage enemies within range."
+  },
+  "118": {
+   "name": "Scorched Earth",
+   "desc": "Damage enemies within range."
+  },
+  "119": {
+   "name": "Magie factice",
+   "desc": "aucun"
+  },
+  "120": {
+   "name": "Magia finta",
+   "desc": "nessuno"
+  },
+  "121": {
+   "name": "Dummy-Zauber",
+   "desc": "Keine"
+  },
+  "122": {
+   "name": "Magia de mueco",
+   "desc": "ninguno"
+  },
+  "123": {
+   "name": "",
+   "desc": "0"
+  },
+  "124": {
+   "name": "",
+   "desc": ""
+  },
+  "125": {
+   "name": "",
+   "desc": ""
+  },
+  "126": {
+   "name": "",
+   "desc": ""
+  },
+  "127": {
+   "name": "",
+   "desc": ""
+  },
+  "128": {
+   "name": "",
+   "desc": ""
+  },
+  "129": {
+   "name": "",
+   "desc": ""
+  },
+  "130": {
+   "name": "",
+   "desc": ""
+  },
+  "131": {
+   "name": "",
+   "desc": ""
+  },
+  "132": {
+   "name": "",
+   "desc": ""
+  },
+  "133": {
+   "name": "",
+   "desc": ""
+  },
+  "134": {
+   "name": "",
+   "desc": ""
+  },
+  "135": {
+   "name": "",
+   "desc": ""
+  },
+  "136": {
+   "name": "",
+   "desc": ""
+  },
+  "137": {
+   "name": "",
+   "desc": ""
+  },
+  "138": {
+   "name": "",
+   "desc": ""
+  },
+  "139": {
+   "name": "",
+   "desc": ""
+  },
+  "140": {
+   "name": "",
+   "desc": ""
+  },
+  "141": {
+   "name": "",
+   "desc": ""
+  },
+  "142": {
+   "name": "",
+   "desc": ""
+  },
+  "143": {
+   "name": "",
+   "desc": ""
+  },
+  "144": {
+   "name": "",
+   "desc": ""
+  },
+  "145": {
+   "name": "",
+   "desc": ""
+  },
+  "146": {
+   "name": "",
+   "desc": ""
+  },
+  "147": {
+   "name": "",
+   "desc": ""
+  },
+  "148": {
+   "name": "",
+   "desc": ""
+  },
+  "149": {
+   "name": "",
+   "desc": "0"
+  },
+  "150": {
+   "name": "0",
+   "desc": ""
+  },
+  "151": {
+   "name": "",
+   "desc": "0"
+  },
+  "152": {
+   "name": "0",
+   "desc": ""
+  },
+  "153": {
+   "name": "",
+   "desc": "0"
+  },
+  "154": {
+   "name": "0",
+   "desc": ""
+  },
+  "155": {
+   "name": "",
+   "desc": ""
+  },
+  "156": {
+   "name": "",
+   "desc": ""
+  },
+  "157": {
+   "name": "",
+   "desc": ""
+  },
+  "158": {
+   "name": "",
+   "desc": ""
+  },
+  "159": {
+   "name": "",
+   "desc": ""
+  },
+  "160": {
+   "name": "",
+   "desc": ""
+  },
+  "161": {
+   "name": "",
+   "desc": "--"
+  },
+  "162": {
+   "name": "--",
+   "desc": ""
+  },
+  "163": {
+   "name": "",
+   "desc": "--"
+  },
+  "164": {
+   "name": "--",
+   "desc": ""
+  },
+  "165": {
+   "name": "",
+   "desc": ""
+  },
+  "166": {
+   "name": "",
+   "desc": ""
+  },
+  "167": {
+   "name": "",
+   "desc": "0"
+  },
+  "168": {
+   "name": "0",
+   "desc": ""
+  },
+  "169": {
+   "name": "",
+   "desc": "0"
+  },
+  "170": {
+   "name": "0",
+   "desc": ""
+  },
+  "171": {
+   "name": "",
+   "desc": "0"
+  },
+  "172": {
+   "name": "0",
+   "desc": ""
+  },
+  "173": {
+   "name": "",
+   "desc": "0"
+  },
+  "174": {
+   "name": "",
+   "desc": ""
+  },
+  "175": {
+   "name": "",
+   "desc": ""
+  },
+  "176": {
+   "name": "",
+   "desc": ""
+  },
+  "177": {
+   "name": "",
+   "desc": ""
+  },
+  "178": {
+   "name": "--",
+   "desc": ""
+  },
+  "179": {
+   "name": "",
+   "desc": ""
+  },
+  "180": {
+   "name": "",
+   "desc": ""
+  },
+  "181": {
+   "name": "",
+   "desc": ""
+  },
+  "182": {
+   "name": "",
+   "desc": ""
+  },
+  "183": {
+   "name": "",
+   "desc": ""
+  },
+  "184": {
+   "name": "",
+   "desc": ""
+  },
+  "185": {
+   "name": "",
+   "desc": ""
+  },
+  "186": {
+   "name": "",
+   "desc": ""
+  },
+  "187": {
+   "name": "",
+   "desc": "--"
+  },
+  "188": {
+   "name": "--",
+   "desc": ""
+  },
+  "189": {
+   "name": "",
+   "desc": "--"
+  },
+  "190": {
+   "name": "",
+   "desc": ""
+  },
+  "191": {
+   "name": "",
+   "desc": ""
+  },
+  "192": {
+   "name": "",
+   "desc": ""
+  },
+  "193": {
+   "name": "",
+   "desc": ""
+  },
+  "194": {
+   "name": "",
+   "desc": ""
+  },
+  "195": {
+   "name": "",
+   "desc": ""
+  },
+  "196": {
+   "name": "",
+   "desc": ""
+  },
+  "197": {
+   "name": "",
+   "desc": ""
+  },
+  "198": {
+   "name": "--",
+   "desc": ""
+  },
+  "199": {
+   "name": "",
+   "desc": ""
+  },
+  "200": {
+   "name": "",
+   "desc": ""
+  },
+  "201": {
+   "name": "",
+   "desc": ""
+  },
+  "202": {
+   "name": "",
+   "desc": ""
+  },
+  "203": {
+   "name": "",
+   "desc": ""
+  },
+  "204": {
+   "name": "",
+   "desc": ""
+  },
+  "205": {
+   "name": "",
+   "desc": ""
+  },
+  "206": {
+   "name": "",
+   "desc": ""
+  },
+  "207": {
+   "name": "",
+   "desc": ""
+  },
+  "208": {
+   "name": "0",
+   "desc": ""
+  },
+  "209": {
+   "name": "",
+   "desc": ""
+  },
+  "210": {
+   "name": "",
+   "desc": ""
+  },
+  "211": {
+   "name": "",
+   "desc": ""
+  },
+  "212": {
+   "name": "",
+   "desc": ""
+  },
+  "213": {
+   "name": "",
+   "desc": ""
+  },
+  "214": {
+   "name": "",
+   "desc": ""
+  },
+  "215": {
+   "name": "",
+   "desc": ""
+  },
+  "216": {
+   "name": "",
+   "desc": ""
+  },
+  "217": {
+   "name": "",
+   "desc": ""
+  },
+  "218": {
+   "name": "0",
+   "desc": ""
+  },
+  "219": {
+   "name": "",
+   "desc": "0"
+  },
+  "220": {
+   "name": "0",
+   "desc": ""
+  }
+ }
+}
