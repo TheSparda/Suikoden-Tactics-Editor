@@ -1,7 +1,8 @@
 # Game data / copyrighted / large — never commit
 *.iso
 ISO/
-Saves/
+# Saves (memory cards) now tracked as test content
+# Saves/
 Editor/
 _decomp/
 *.exe
