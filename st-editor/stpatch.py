@@ -56,10 +56,11 @@ def load_tables():
 # per shape {u32 pair_count, pair_count x (s8 dx, s8 dy)} in a padded block;
 # a shape may grow in place up to its block capacity without moving others.
 # Verified live in PCSX2 by repointing offsets in RAM: Eternal Ordeal uses
-# shape 0, Double-Edged Sword shape 133. Which shape a spell uses is picked
-# in code (not stored per spell in any table found). Spell RANGE turned
-# out to be a per-spell disc field after all (descriptor table below,
-# round 9); the flood-fill builder is the movement zone, not the spell zone.
+# shape 0, Double-Edged Sword shape 133. Which shape a spell uses IS stored
+# per spell after all: the descriptor table's +0x32 field (below, round 10;
+# round 7's "picked in code" verdict was wrong). Spell RANGE is the +0x30
+# field of the same record (round 9); the flood-fill builder is the
+# movement zone, not the spell zone.
 SHAPE_BASE = 0x35FDC00
 SHAPE_TOTAL = 0x22F0
 
@@ -91,21 +92,46 @@ def decode_shapes(read):
 # difference < 3; terrain-wide spells store 47). Verified three ways:
 # guide correlation 34/34, RAM A/B (Eternal Ordeal 6 -> 2 shrank its
 # targeting zone 54 -> 13 panels), fresh-boot ISO A/B (1-byte patch).
-# The s16 at +0x32 matches the area shape for 31/34 spells, but its
-# consumer path is not cleanly proven (the Rune of Punishment spells
-# disagree), so it is deliberately NOT exposed here or in the web editor.
+# Spell AREA is the s16 at record +0x32: the shape-library index the
+# battle area builders (func_002C81B8 / func_002C82F0, via func_0031F5E8
+# field 1) expand around the target tile (RE round 10). Round 10 also
+# resolved the Rune of Punishment anomaly: an extra descriptor record
+# (32: range 6, area 0, no matching ability) sits between Eternal
+# Ordeal and Double-Edged Sword, so the RoP spells after Eternal Ordeal
+# read the record one above their ability id. Double-Edged Sword uses
+# record 33 for BOTH fields, proven live: writing record 33's +0x32
+# 133 -> 46 turned its 3x3 area into the 7x7, writing its +0x30 6 -> 2
+# shrank its targeting zone 54 -> 13, and writes to record 32 changed
+# nothing for either RoP spell. Voice of Death and Everlasting Mercy
+# follow the same shift (their stored values match the guide only
+# under it). See desc_record_id().
 DESC_BASE = 0x3610610
 DESC_STRIDE = 0x50
 RANGE_OFF = 0x30
+AREA_OFF = 0x32
+
+
+def desc_record_id(ability_id):
+    """Descriptor record the game reads for an ability (RE round 10)."""
+    return ability_id + 1 if 32 <= ability_id <= 34 else ability_id
 
 
 def spell_range_offset(ability_id):
-    return DESC_BASE + ability_id * DESC_STRIDE + RANGE_OFF
+    return DESC_BASE + desc_record_id(ability_id) * DESC_STRIDE + RANGE_OFF
+
+
+def spell_area_offset(ability_id):
+    return DESC_BASE + desc_record_id(ability_id) * DESC_STRIDE + AREA_OFF
 
 
 def decode_spell_range(read, ability_id):
     """read(offset, n) -> bytes. Return the stored range (shape index)."""
     return struct.unpack("<h", read(spell_range_offset(ability_id), 2))[0]
+
+
+def decode_spell_area(read, ability_id):
+    """read(offset, n) -> bytes. Return the stored area shape index."""
+    return struct.unpack("<h", read(spell_area_offset(ability_id), 2))[0]
 
 
 class ISOEditor:

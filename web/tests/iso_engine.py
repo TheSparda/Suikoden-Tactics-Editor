@@ -102,6 +102,25 @@ try:
        and shapes[1]["pairs"] == [[1, 0], [0, 1]],
        "shape table decode (count/offsets/pairs/capacity)")
 
+    # spell descriptor table (RE rounds 9-10): range = s16 at record +0x30,
+    # area shape = s16 at +0x32; the Rune of Punishment spells after Eternal
+    # Ordeal (abilities 32-34) read the record one above their ability id.
+    with open(path, "r+b") as f:
+        for rec, rng, area in ((31, 6, 0), (32, 6, 0), (33, 6, 133), (34, 6, 0), (35, 6, 134), (12, 4, 46)):
+            f.seek(stpatch.DESC_BASE + rec * stpatch.DESC_STRIDE + stpatch.RANGE_OFF)
+            f.write(_struct.pack("<hh", rng, area))
+    ok(stpatch.decode_spell_range(ed.read_bytes, 31) == 6
+       and stpatch.decode_spell_area(ed.read_bytes, 31) == 0,
+       "descriptor decode, unshifted (Eternal Ordeal record 31)")
+    ok(stpatch.decode_spell_range(ed.read_bytes, 32) == 6
+       and stpatch.decode_spell_area(ed.read_bytes, 32) == 133,
+       "descriptor decode, RoP shift (Double-Edged Sword reads record 33)")
+    ok(stpatch.decode_spell_area(ed.read_bytes, 34) == 134,
+       "descriptor decode, RoP shift (Everlasting Mercy reads record 35)")
+    ok(stpatch.decode_spell_area(ed.read_bytes, 12) == 46
+       and stpatch.spell_area_offset(12) == stpatch.DESC_BASE + 12 * stpatch.DESC_STRIDE + 0x32,
+       "descriptor decode, unshifted (Silent Lake record 12)")
+
     # skills table sits at the corrected base 0x3652E10 (V11 framing was +0x10)
     ok(tables["skills"]["base"] == 0x3652E10 and tables["skills"]["count"] == 36,
        "skills table base/count corrected (0x3652E10 x36)")

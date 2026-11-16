@@ -237,7 +237,7 @@ rounds 3–4.
   panel-count + per-panel dx/dy editing within block capacity) reading
   the region via collectRanges (SHAPE_BASE/SHAPE_TOTAL in web/iso.js).
 
-### Spell descriptor table (range) — FOUND and editor-wired (2026-11-15, round 9)
+### Spell descriptor table (range + area) — FOUND and editor-wired (2026-11-15, rounds 9-10)
 - Runtime segment 0xCD74. Header at ISO 0x3610610: s16 +0 = 1 (type),
   s16 +2 = 0x50 (stride), s16 +4 = 221 (count). Record for ability id
   (1-based; record 0 is a dummy) at 0x3610610 + id x 0x50. The grid is
@@ -251,17 +251,31 @@ rounds 3–4.
   spells store 47). Verified three ways (RE_NOTES round 9): guide
   correlation 34/34; RAM A/B (Eternal Ordeal 6 -> 2 shrank its zone
   54 -> 13 panels); fresh-boot ISO A/B (1-byte patch at 0x3610FF0).
-- Area shape index candidate = s16 at record +0x32: matches the live
-  shape for 31/34 spells, but the three Rune of Punishment spells
-  disagree (Double-Edged Sword field 0 vs live 133) and the consumer
-  path is not cleanly proven, so this field is NOT editor-exposed.
+- **Spell AREA shape = s16 at record +0x32** (round 10, RESOLVED): the
+  shape-library index the battle area builders expand around the target
+  tile. The round-9 mismatch was a record-mapping subtlety, not a bad
+  field: an extra descriptor record (32: range 6, area 0, no matching
+  ability) sits between Eternal Ordeal (31) and Double-Edged Sword, so
+  the Rune of Punishment spells after Eternal Ordeal read the record
+  one above their ability id (Double-Edged Sword -> 33, Voice of Death
+  -> 34, Everlasting Mercy -> 35). Proven live for Double-Edged Sword
+  (record 33 +0x32 133 -> 46 turned its area 3x3 into the 7x7; +0x30
+  6 -> 2 shrank its zone 54 -> 13; record 32 writes changed nothing)
+  and for Eternal Ordeal at record 31 (+0x32 0 -> 45 gave it the 5x5);
+  Voice of Death / Everlasting Mercy follow the same shift (their
+  stored values match the guide only under it). Editor mapping:
+  stpatch.desc_record_id / web descId().
 - Game accessors: func_0031F3C8 (record resolve), func_0031F5E8
-  (+0x30 mode 0 with a grade-up ladder = the likely S-rank +1 route;
-  +0x32 mode 1), func_002BA1B0, area builder func_002C8528. In RAM the
-  segment data is at 0xBCAF80 (records 0xBCAF90); segment pointers are
-  cached in the hash table at RAM 0x4AAE8C.
-- Editor wiring: st_tables.json "descriptors" + a Range number field
-  on the Spells tab (web/iso.js); stpatch.py DESC_BASE/DESC_STRIDE.
+  (field index in s16 units from +0x30: field 0 = range, with a grade-up
+  ladder = the likely S-rank +1 route; field 1 = area, a plain read),
+  func_002BA1B0 (wrapper), range-zone builder func_002C8528, area
+  builders func_002C81B8 and func_002C82F0. In RAM the segment data is
+  at 0xBCAF80 (records 0xBCAF90); segment pointers are cached in the
+  hash table at RAM 0x4AAE8C.
+- Editor wiring: st_tables.json "descriptors" + Range and Area shape
+  fields on the Spells tab (web/iso.js, RoP shift applied); the Shapes
+  tab lists each shape's rune-spell users; stpatch.py
+  DESC_BASE/DESC_STRIDE + decode_spell_range/decode_spell_area.
 
 ### Open questions / to verify
 - Exact per-field byte offsets within each record (parser saw explicit re-seeks;

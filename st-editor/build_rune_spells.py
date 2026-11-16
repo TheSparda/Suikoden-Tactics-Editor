@@ -69,10 +69,12 @@ def read_units(f, start, count):
 # plain fields in the 80-byte ability record. The values below are the verified
 # reference numbers from the Neoseeker "Rune Abilities Guide" v1.6 (Yeblos),
 # cross-checked against the game's own text; the editor shows them read-only
-# next to each spell. (Round 9 update: range IS stored, in the descriptor
-# table at ISO 0x3610610 + id x 0x50 + 0x30 — see stpatch.py DESC_BASE — and
-# the guide ranges below match it 34/34; the Spells tab edits the stored
-# value directly. Area and casting speed remain reference-only.)
+# next to each spell. (Round 9/10 update: range IS stored, in the descriptor
+# table at ISO 0x3610610 + record x 0x50 + 0x30, and area is the shape index
+# at +0x32 of the same record — see stpatch.py DESC_BASE and desc_record_id
+# for the Rune of Punishment record shift — and the guide values below match
+# the stored ones; the Spells tab edits both stored values directly.
+# Casting speed remains reference-only.)
 # "All" = the terrain-wide spells (infinite range, every terrain panel).
 GUIDE_RANGE_AREA = {
     1: ("4", "5"), 2: ("4", "13"), 3: ("4", "1"), 4: ("All", "All terrain"),

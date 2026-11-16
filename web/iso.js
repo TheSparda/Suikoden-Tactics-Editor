@@ -23,8 +23,19 @@
   const SHAPE_BASE = 0x35FDC00;       // area shape library (RE round 7): u32 0, u32 count,
   const SHAPE_TOTAL = 0x22F0;         // count x u32 block offsets, then {u32 n, n x (s8 dx, s8 dy)}
   const DESC_BASE = 0x3610610;        // spell descriptor table (RE round 9, segment 0xCD74):
-  const DESC_STRIDE = 0x50;           // record per ability id; spell RANGE = s16 at +0x30
-  const DESC_COUNT = 221;
+  const DESC_STRIDE = 0x50;           // record per ability id; spell RANGE = s16 at +0x30,
+  const DESC_COUNT = 221;             // spell AREA shape = s16 at +0x32 (RE round 10)
+
+  // Descriptor record the game reads for an ability (RE round 10): an extra
+  // record (32: range 6, area 0, no matching ability) sits in the descriptor
+  // table between Eternal Ordeal (31) and Double-Edged Sword, so the Rune of
+  // Punishment spells after Eternal Ordeal read the record one above their
+  // ability id. Proven live for Double-Edged Sword (record 33 drives both
+  // its range and its area; record 32 drives neither); Voice of Death and
+  // Everlasting Mercy follow the same shift (their stored values match the
+  // guide only under it). Every other ability uses its own record.
+  function descId(id) { return (id >= 32 && id <= 34) ? id + 1 : id; }
+  function descOff(id, field) { return DESC_BASE + descId(id) * DESC_STRIDE + field; }
 
   const D = {                          // ISO state
     handle: null, name: '', fileSize: 0, chars: [], tables: {}, schema: null, maps: {},
@@ -398,8 +409,9 @@
   // 2026-11-15): these are verified values (the game's own data sheets for
   // speed; the Neoseeker rune guide cross-checked against them for range and
   // area) shown read-only — they are NOT fields of the ability record.
-  // (Round 9: range IS stored, in the descriptor table, and is editable on
-  // the Spells tab; this line stays the guide reference for area + speed.)
+  // (Rounds 9-10: range and area shape ARE stored, in the descriptor table,
+  // and are editable below; this line stays the guide reference, and the
+  // only reference for casting speed.)
   function refLine(a) {
     const r = (a && a.ref) || {};
     const parts = [];
@@ -487,6 +499,17 @@
     return d;
   }
 
+  // Rune spells (ability ids 1..34) whose descriptor area field points at
+  // shape i (RE round 10 mapping, incl. the Rune of Punishment shift).
+  function spellShapeUsers(i) {
+    const out = [];
+    const abs = (D.runeSpells && D.runeSpells.abilities) || {};
+    for (let id = 1; id <= 34; id++) {
+      if (rd(descOff(id, 0x32), 2) === i) out.push((abs[String(id)] || {}).name || `ability ${id}`);
+    }
+    return out;
+  }
+
   function renderShapes() {
     const host = $('#isoView'); host.innerHTML = '';
     const n = shapeCount();
@@ -501,10 +524,15 @@
     sel.querySelector('#isoShapeSel').onchange = (e) => { D.shapeId = +e.target.value; renderShapes(); };
     const note = document.createElement('div'); note.className = 'fnote'; note.style.marginBottom = '6px';
     note.textContent = 'A spell\'s area is one of these (dx, dy) offset lists, expanded around the target tile at cast time. '
-      + 'Shapes are shared, so editing one changes every spell or technique that uses it. Verified users: #0 = Eternal Ordeal, #133 = Double-Edged Sword; '
-      + 'the game picks the shape for each spell in code, so the other mappings are not listed. A shape can only grow within its padded block (capacity above) — '
-      + 'shrinking and reshaping are free. Spell range is stored per spell in a descriptor table — edit it on the Spells tab.';
+      + 'Which shape a spell uses is stored per spell in the descriptor table (RE round 10) — reassign it per spell on the Spells tab (Area shape). '
+      + 'Shapes are shared, so editing one changes every spell or technique that uses it; to give a spell a fully custom area, sculpt a shape no spell uses '
+      + '(see below) and assign it to the spell. A shape can only grow within its padded block (capacity above) — '
+      + 'shrinking and reshaping are free. Spell range is also stored per spell in the descriptor table — edit it on the Spells tab.';
     host.appendChild(note);
+    const users = spellShapeUsers(id);
+    const u = document.createElement('div'); u.className = 'fnote'; u.style.marginBottom = '6px';
+    u.textContent = users.length ? `Used as the area of: ${users.join(', ')}.` : 'Not the area of any rune spell — safe to sculpt as a custom shape.';
+    host.appendChild(u);
     // preview grid
     const pairs = Array.from({ length: len }, (_, k) => shapePair(id, k));
     if (pairs.length) {
@@ -594,6 +622,23 @@
     return d;
   }
 
+  // Area-shape picker (RE round 10): a <select> over the shape library,
+  // writing the s16 at the spell's descriptor record +0x32.
+  function shapePickControl(abs, group, label) {
+    const d = document.createElement('div'); d.className = 'fld';
+    const n = shapeCount();
+    const cur = rd(abs, 2), dirty = cur !== rdOrig(abs, 2);
+    const fmt = (v) => `#${v} — ${v >= 0 && v < n ? shapeLen(v) : '?'} panels`;
+    const opts = Array.from({ length: n }, (_, i) => `<option value="${i}"${i === cur ? ' selected' : ''}>#${i} — ${shapeLen(i)} panels${SHAPE_KNOWN[i] ? ` (${SHAPE_KNOWN[i]})` : ''}</option>`).join('');
+    d.innerHTML = `<label>${escapeHtml(label)}${dirty ? '<button class="revert" title="revert" type="button">↺</button>' : ''}</label>
+      <select>${cur < 0 || cur >= n ? `<option value="${cur}" selected>#${cur} (outside library)</option>` : ''}${opts}</select>`;
+    if (dirty) d.classList.add('chg');
+    const sel = d.querySelector('select');
+    sel.onchange = () => { wrVal(abs, 2, +sel.value); reconcileEdit(abs, 2, group, label, fmt); rerender(); };
+    if (dirty) d.querySelector('.revert').onclick = () => { wrVal(abs, 2, rdOrig(abs, 2)); reconcileEdit(abs, 2, group, label, fmt); rerender(); };
+    return d;
+  }
+
   function renderTable(name) {
     const host = $('#isoView'); host.innerHTML = '';
     const t = D.tables[name]; if (!t) { host.textContent = 'No such table.'; return; }
@@ -626,7 +671,7 @@
       const ab = (D.runeSpells && D.runeSpells.abilities[String(D.tableId)]) || {};
       if (ab.desc) { const p2 = document.createElement('div'); p2.className = 'fnote'; p2.style.marginBottom = '6px'; p2.textContent = ab.desc; host.appendChild(p2); }
       const rl = refLine(ab);
-      if (rl) { const p3 = document.createElement('div'); p3.className = 'fnote'; p3.style.marginBottom = '6px'; p3.textContent = `${rl} (guide reference — area and casting speed are not stored as plain fields, so they stay read-only; range IS stored, in a descriptor table, and is editable below)`; host.appendChild(p3); }
+      if (rl) { const p3 = document.createElement('div'); p3.className = 'fnote'; p3.style.marginBottom = '6px'; p3.textContent = `${rl} (guide reference — casting speed is not stored as a plain field and stays read-only; range and area shape ARE stored, in a descriptor table, and are editable below)`; host.appendChild(p3); }
     }
 
     const recOff = t.base + D.tableId * t.stride;
@@ -658,16 +703,23 @@
       return numControl(recOff + f.off, f.w, grp, f.label, 0, (1 << (8 * f.w)) - 1);
     })));
 
-    // spell range (RE round 9): NOT in the ability record — it is the s16
-    // at DESC_BASE + id x DESC_STRIDE + 0x30 in the descriptor table
-    // (runtime segment 0xCD74). The value is a shape-library index: the
-    // targeting zone is that diamond filtered by on-map + height < 3
-    // (0-8 = diamond radius, 47 = terrain-wide). Verified in game.
+    // spell range + area shape (RE rounds 9-10): NOT in the ability record —
+    // they are the s16 fields at +0x30 (range) and +0x32 (area shape) of the
+    // spell's record in the descriptor table (runtime segment 0xCD74; see
+    // descId for the Rune of Punishment record shift). Both are shape-library
+    // indices: the targeting zone is the range shape filtered by on-map +
+    // height < 3 (0-8 = diamond radius, 47 = terrain-wide), and the area
+    // shape is expanded around the target tile. Both verified in game
+    // (range: Eternal Ordeal 6 → 2 shrank its zone 54 → 13 panels; area:
+    // Double-Edged Sword reassigned 133 → 46 turned its 3x3 into a 7x7).
     if (name === 'abilities') {
       const p4 = document.createElement('div'); p4.className = 'fnote'; p4.style.margin = '6px 0';
-      p4.textContent = 'Range (below) is how far this spell can be targeted, stored in a separate descriptor table and verified in game (Eternal Ordeal 6 → 2 shrank its zone from 54 to 13 panels).';
+      p4.textContent = 'Range and Area shape (below) are stored per spell in a separate descriptor table and verified in game. Range is how far this spell can be targeted; Area shape is the pattern of panels it hits around the target (sculpt the shapes themselves on the Shapes tab). The Rune of Punishment spells after Eternal Ordeal read the next descriptor record up (Double-Edged Sword uses record 33) — the editor handles that shift for you.';
       host.appendChild(p4);
-      host.appendChild(grid([numControl(DESC_BASE + D.tableId * DESC_STRIDE + 0x30, 2, grp, 'Range', 0, 141)]));
+      host.appendChild(grid([
+        numControl(descOff(D.tableId, 0x30), 2, grp, 'Range', 0, 141),
+        shapePickControl(descOff(D.tableId, 0x32), grp, 'Area shape'),
+      ]));
     }
   }
 
