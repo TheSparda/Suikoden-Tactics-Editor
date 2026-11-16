@@ -22,6 +22,9 @@
   const RECORD_LEN = 0x280;
   const SHAPE_BASE = 0x35FDC00;       // area shape library (RE round 7): u32 0, u32 count,
   const SHAPE_TOTAL = 0x22F0;         // count x u32 block offsets, then {u32 n, n x (s8 dx, s8 dy)}
+  const DESC_BASE = 0x3610610;        // spell descriptor table (RE round 9, segment 0xCD74):
+  const DESC_STRIDE = 0x50;           // record per ability id; spell RANGE = s16 at +0x30
+  const DESC_COUNT = 221;
 
   const D = {                          // ISO state
     handle: null, name: '', fileSize: 0, chars: [], tables: {}, schema: null, maps: {},
@@ -94,6 +97,7 @@
     D.chars.forEach((c) => { if (typeof c.offset === 'number') r.push([c.offset, c.offset + RECORD_LEN]); });
     Object.values(D.tables).forEach((t) => r.push([t.base, t.base + t.count * t.stride]));
     r.push([SHAPE_BASE, SHAPE_BASE + SHAPE_TOTAL]);   // area shape library (not a fixed-stride table)
+    r.push([DESC_BASE, DESC_BASE + DESC_COUNT * DESC_STRIDE]);   // spell descriptor table (range)
     return r.sort((a, b) => a[0] - b[0]);
   }
   function mergeRanges(ranges) {
@@ -394,6 +398,8 @@
   // 2026-11-15): these are verified values (the game's own data sheets for
   // speed; the Neoseeker rune guide cross-checked against them for range and
   // area) shown read-only — they are NOT fields of the ability record.
+  // (Round 9: range IS stored, in the descriptor table, and is editable on
+  // the Spells tab; this line stays the guide reference for area + speed.)
   function refLine(a) {
     const r = (a && a.ref) || {};
     const parts = [];
@@ -448,8 +454,8 @@
    * shape 133 = Double-Edged Sword. Shapes are shared between spells,
    * techniques and other systems, so editing one changes every user of it.
    * A shape may only grow within its padded disc block (capacity), which
-   * keeps every other shape's offset valid. Spell RANGE is a separate
-   * flood-fill limit in code and is not editable data. */
+   * keeps every other shape's offset valid. Spell RANGE lives in the
+   * descriptor table (round 9) and is edited on the Spells tab, not here. */
   const SHAPE_KNOWN = { 0: 'Eternal Ordeal', 133: 'Double-Edged Sword' };
   function shapeCount() { return rd(SHAPE_BASE + 4, 4); }
   function shapeOff(i) { return rd(SHAPE_BASE + 8 + 4 * i, 4); }
@@ -497,7 +503,7 @@
     note.textContent = 'A spell\'s area is one of these (dx, dy) offset lists, expanded around the target tile at cast time. '
       + 'Shapes are shared, so editing one changes every spell or technique that uses it. Verified users: #0 = Eternal Ordeal, #133 = Double-Edged Sword; '
       + 'the game picks the shape for each spell in code, so the other mappings are not listed. A shape can only grow within its padded block (capacity above) — '
-      + 'shrinking and reshaping are free. Spell range is computed in code (a flood-fill limit) and is not stored here or in the spell record.';
+      + 'shrinking and reshaping are free. Spell range is stored per spell in a descriptor table — edit it on the Spells tab.';
     host.appendChild(note);
     // preview grid
     const pairs = Array.from({ length: len }, (_, k) => shapePair(id, k));
@@ -620,7 +626,7 @@
       const ab = (D.runeSpells && D.runeSpells.abilities[String(D.tableId)]) || {};
       if (ab.desc) { const p2 = document.createElement('div'); p2.className = 'fnote'; p2.style.marginBottom = '6px'; p2.textContent = ab.desc; host.appendChild(p2); }
       const rl = refLine(ab);
-      if (rl) { const p3 = document.createElement('div'); p3.className = 'fnote'; p3.style.marginBottom = '6px'; p3.textContent = `${rl} (reference values — range, area and casting speed are not stored as plain fields in the ability record, so they are shown read-only)`; host.appendChild(p3); }
+      if (rl) { const p3 = document.createElement('div'); p3.className = 'fnote'; p3.style.marginBottom = '6px'; p3.textContent = `${rl} (guide reference — area and casting speed are not stored as plain fields, so they stay read-only; range IS stored, in a descriptor table, and is editable below)`; host.appendChild(p3); }
     }
 
     const recOff = t.base + D.tableId * t.stride;
@@ -651,6 +657,18 @@
       if (ref) return tblPicker(recOff + f.off, f.w, grp, f.label, ref);
       return numControl(recOff + f.off, f.w, grp, f.label, 0, (1 << (8 * f.w)) - 1);
     })));
+
+    // spell range (RE round 9): NOT in the ability record — it is the s16
+    // at DESC_BASE + id x DESC_STRIDE + 0x30 in the descriptor table
+    // (runtime segment 0xCD74). The value is a shape-library index: the
+    // targeting zone is that diamond filtered by on-map + height < 3
+    // (0-8 = diamond radius, 47 = terrain-wide). Verified in game.
+    if (name === 'abilities') {
+      const p4 = document.createElement('div'); p4.className = 'fnote'; p4.style.margin = '6px 0';
+      p4.textContent = 'Range (below) is how far this spell can be targeted, stored in a separate descriptor table and verified in game (Eternal Ordeal 6 → 2 shrank its zone from 54 to 13 panels).';
+      host.appendChild(p4);
+      host.appendChild(grid([numControl(DESC_BASE + D.tableId * DESC_STRIDE + 0x30, 2, grp, 'Range', 0, 141)]));
+    }
   }
 
   // hexKeys: keys are hex (runes/weapon/orbs) → show 0xNN; else decimal id.

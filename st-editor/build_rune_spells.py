@@ -66,10 +66,13 @@ def read_units(f, start, count):
 # Range / area reference values (RE 2026-11-15, round 5). These are NOT read
 # from the ability record: a field-by-field correlation against the game's own
 # "Effect:" data sheets proved range, area and casting speed are not stored as
-# plain fields in the 80-byte ability record (they live in the effect data the
-# record points at). The values below are the verified reference numbers from
-# the Neoseeker "Rune Abilities Guide" v1.6 (Yeblos), cross-checked against
-# the game's own text; the editor shows them read-only next to each spell.
+# plain fields in the 80-byte ability record. The values below are the verified
+# reference numbers from the Neoseeker "Rune Abilities Guide" v1.6 (Yeblos),
+# cross-checked against the game's own text; the editor shows them read-only
+# next to each spell. (Round 9 update: range IS stored, in the descriptor
+# table at ISO 0x3610610 + id x 0x50 + 0x30 — see stpatch.py DESC_BASE — and
+# the guide ranges below match it 34/34; the Spells tab edits the stored
+# value directly. Area and casting speed remain reference-only.)
 # "All" = the terrain-wide spells (infinite range, every terrain panel).
 GUIDE_RANGE_AREA = {
     1: ("4", "5"), 2: ("4", "13"), 3: ("4", "1"), 4: ("All", "All terrain"),

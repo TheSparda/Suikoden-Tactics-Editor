@@ -228,10 +228,40 @@ rounds 3–4.
   func_002C9480), not a shape and not an ability-record field (idx8/9/14/
   16/17 patch-tested live in round 7; idx17 is a targeting-mode enum).
   Range therefore stays read-only reference in the editor.
+  SUPERSEDED 2026-11-15 night (round 9, RE_NOTES.md): the range verdict
+  above is wrong. Range IS stored per spell, in the descriptor table
+  below; the flood-fill functions named here build the MOVEMENT zone,
+  not the spell zone. Range is editor-writable as of round 9.
 - Editor wiring: `stpatch.decode_shapes()` is the Python reference
   decoder; the web editor has a Shapes tab (selector, grid preview,
   panel-count + per-panel dx/dy editing within block capacity) reading
   the region via collectRanges (SHAPE_BASE/SHAPE_TOTAL in web/iso.js).
+
+### Spell descriptor table (range) — FOUND and editor-wired (2026-11-15, round 9)
+- Runtime segment 0xCD74. Header at ISO 0x3610610: s16 +0 = 1 (type),
+  s16 +2 = 0x50 (stride), s16 +4 = 221 (count). Record for ability id
+  (1-based; record 0 is a dummy) at 0x3610610 + id x 0x50. The grid is
+  shifted +0x30 against the ability table (base 0x36105E0), which is why
+  per-record hunts missed it: range(k) is the s16 at ability record
+  (k+2) +0x10 in the ability grid. Address this table on its own base,
+  never through the ability grid.
+- **Spell RANGE = s16 at record +0x30** (ISO 0x3610640 + id x 0x50).
+  The value is a shape-library index: the targeting zone is that
+  diamond filtered by on-map + height difference < 3 (terrain-wide
+  spells store 47). Verified three ways (RE_NOTES round 9): guide
+  correlation 34/34; RAM A/B (Eternal Ordeal 6 -> 2 shrank its zone
+  54 -> 13 panels); fresh-boot ISO A/B (1-byte patch at 0x3610FF0).
+- Area shape index candidate = s16 at record +0x32: matches the live
+  shape for 31/34 spells, but the three Rune of Punishment spells
+  disagree (Double-Edged Sword field 0 vs live 133) and the consumer
+  path is not cleanly proven, so this field is NOT editor-exposed.
+- Game accessors: func_0031F3C8 (record resolve), func_0031F5E8
+  (+0x30 mode 0 with a grade-up ladder = the likely S-rank +1 route;
+  +0x32 mode 1), func_002BA1B0, area builder func_002C8528. In RAM the
+  segment data is at 0xBCAF80 (records 0xBCAF90); segment pointers are
+  cached in the hash table at RAM 0x4AAE8C.
+- Editor wiring: st_tables.json "descriptors" + a Range number field
+  on the Spells tab (web/iso.js); stpatch.py DESC_BASE/DESC_STRIDE.
 
 ### Open questions / to verify
 - Exact per-field byte offsets within each record (parser saw explicit re-seeks;

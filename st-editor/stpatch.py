@@ -57,8 +57,9 @@ def load_tables():
 # a shape may grow in place up to its block capacity without moving others.
 # Verified live in PCSX2 by repointing offsets in RAM: Eternal Ordeal uses
 # shape 0, Double-Edged Sword shape 133. Which shape a spell uses is picked
-# in code (not stored per spell in any table found), and spell RANGE is a
-# separate flood-fill limit in code, so neither is a per-spell disc field.
+# in code (not stored per spell in any table found). Spell RANGE turned
+# out to be a per-spell disc field after all (descriptor table below,
+# round 9); the flood-fill builder is the movement zone, not the spell zone.
 SHAPE_BASE = 0x35FDC00
 SHAPE_TOTAL = 0x22F0
 
@@ -79,6 +80,32 @@ def decode_shapes(read):
         shapes.append({"count": n, "capacity": (end - start - 4) // 2,
                        "pairs": pairs})
     return shapes
+
+
+# Spell descriptor table (RE round 9, runtime segment 0xCD74). Header
+# {s16 type=1, s16 stride=0x50, s16 count=221}; the record for ability id
+# (record 0 is a dummy) sits at DESC_BASE + id * DESC_STRIDE. The grid is
+# shifted +0x30 against the ability table, which is why per-record hunts
+# missed it. Spell RANGE is the s16 at record +0x30: a shape-library
+# index (the targeting zone is that diamond filtered by on-map + height
+# difference < 3; terrain-wide spells store 47). Verified three ways:
+# guide correlation 34/34, RAM A/B (Eternal Ordeal 6 -> 2 shrank its
+# targeting zone 54 -> 13 panels), fresh-boot ISO A/B (1-byte patch).
+# The s16 at +0x32 matches the area shape for 31/34 spells, but its
+# consumer path is not cleanly proven (the Rune of Punishment spells
+# disagree), so it is deliberately NOT exposed here or in the web editor.
+DESC_BASE = 0x3610610
+DESC_STRIDE = 0x50
+RANGE_OFF = 0x30
+
+
+def spell_range_offset(ability_id):
+    return DESC_BASE + ability_id * DESC_STRIDE + RANGE_OFF
+
+
+def decode_spell_range(read, ability_id):
+    """read(offset, n) -> bytes. Return the stored range (shape index)."""
+    return struct.unpack("<h", read(spell_range_offset(ability_id), 2))[0]
 
 
 class ISOEditor:
