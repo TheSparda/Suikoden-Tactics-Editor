@@ -200,6 +200,39 @@ rounds 3–4.
   the web editor has Runes and Spells tabs (spell-assignment pickers,
   value, power) on top of the generic table machinery.
 
+### Area shape table — FOUND and editor-wired (2026-11-15, round 7)
+- ISO 0x35FDC00, 0x22F0 bytes, loaded in battle as segment [26] to RAM
+  0xBB8580 (occurs exactly once in the ISO). 142 shapes. Layout: u32 zero,
+  u32 count (142), count x u32 offsets relative to the first shape block,
+  then per shape {u32 pair_count, pair_count x (s8 dx, s8 dy)} in a padded
+  block; a shape can grow in place up to its block capacity
+  ((next_offset - offset - 4) / 2 pairs; 345 spare pairs across the table).
+- A spell's AREA is the offset list of the shape it maps to, expanded
+  around the target tile by the targeting code (expander func_002C7E08 via
+  the accessor func_002C6110; the action object it fills is a 0x321C-byte
+  struct in a 16-slot pool, panel count at +0x00, pairs at +0x0E).
+  Shape families: 0-8 = centered diamonds radius 0-8 (1/5/13/25/41/61/85/
+  113/145 panels), 40/100/110/133/135 = 3x3 squares, 45/74/111/134 = 5x5
+  squares, 46 = 7x7, plus lines, cones, fans and directional variants.
+- Verified live in PCSX2 by repointing shape offsets in RAM: Eternal
+  Ordeal (ability 31) uses shape 0 (repointed to shape 1's data, its
+  targeting area became 5 panels); Double-Edged Sword (ability 32) uses
+  shape 133 (repointed to shape 0's data, its area became 1; shapes 40,
+  100, 110, 135 ruled out). The full table was byte-matched between the
+  RAM dump and this ISO offset, so editor edits here are what the game
+  loads.
+- Which shape a spell uses is NOT stored per spell in any table found
+  (ability record combo-patch proof in round 6; exhaustive RAM scan for a
+  mapping array in round 7) — it is picked in code. Spell RANGE is also
+  code-side: a flood-fill distance limit (builder func_002C7AA0 /
+  func_002C9480), not a shape and not an ability-record field (idx8/9/14/
+  16/17 patch-tested live in round 7; idx17 is a targeting-mode enum).
+  Range therefore stays read-only reference in the editor.
+- Editor wiring: `stpatch.decode_shapes()` is the Python reference
+  decoder; the web editor has a Shapes tab (selector, grid preview,
+  panel-count + per-panel dx/dy editing within block capacity) reading
+  the region via collectRanges (SHAPE_BASE/SHAPE_TOTAL in web/iso.js).
+
 ### Open questions / to verify
 - Exact per-field byte offsets within each record (parser saw explicit re-seeks;
   pull literal offsets from each table's patch/write method).

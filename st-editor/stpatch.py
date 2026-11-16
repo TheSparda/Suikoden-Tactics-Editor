@@ -15,6 +15,7 @@ import argparse
 import json
 import os
 import shutil
+import struct
 import sys
 
 import stfields
@@ -45,6 +46,39 @@ def load_tables():
         return {}
     with open(p, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+# --- area shape table (RE round 7, 2026-11-15) ------------------------------
+# Spell/technique AREA is not a field of the ability record. At targeting
+# time the game expands an (dx, dy) offset list from this 142-entry shape
+# library in FILEDATA (loaded to RAM 0xBB8580 in battle). Layout: u32 zero,
+# u32 count, count x u32 offsets (relative to the first shape block), then
+# per shape {u32 pair_count, pair_count x (s8 dx, s8 dy)} in a padded block;
+# a shape may grow in place up to its block capacity without moving others.
+# Verified live in PCSX2 by repointing offsets in RAM: Eternal Ordeal uses
+# shape 0, Double-Edged Sword shape 133. Which shape a spell uses is picked
+# in code (not stored per spell in any table found), and spell RANGE is a
+# separate flood-fill limit in code, so neither is a per-spell disc field.
+SHAPE_BASE = 0x35FDC00
+SHAPE_TOTAL = 0x22F0
+
+
+def decode_shapes(read):
+    """read(offset, n) -> bytes. Return [{count, capacity, pairs}]."""
+    count = struct.unpack("<I", read(SHAPE_BASE + 4, 4))[0]
+    offs = struct.unpack("<{}I".format(count), read(SHAPE_BASE + 8, 4 * count))
+    data_base = SHAPE_BASE + 8 + 4 * count
+    shapes = []
+    for i in range(count):
+        start = data_base + offs[i]
+        last = i + 1 == count
+        end = data_base + (SHAPE_TOTAL - 8 - 4 * count if last else offs[i + 1])
+        n = struct.unpack("<I", read(start, 4))[0]
+        raw = read(start + 4, 2 * n)
+        pairs = [list(struct.unpack_from("<bb", raw, 2 * k)) for k in range(n)]
+        shapes.append({"count": n, "capacity": (end - start - 4) // 2,
+                       "pairs": pairs})
+    return shapes
 
 
 class ISOEditor:

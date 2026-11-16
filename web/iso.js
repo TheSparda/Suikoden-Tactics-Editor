@@ -20,10 +20,12 @@
   const MERGE_GAP = 1 << 20;          // merge editable ranges within 1 MiB into one window
   const HAS_FS = 'showOpenFilePicker' in window;
   const RECORD_LEN = 0x280;
+  const SHAPE_BASE = 0x35FDC00;       // area shape library (RE round 7): u32 0, u32 count,
+  const SHAPE_TOTAL = 0x22F0;         // count x u32 block offsets, then {u32 n, n x (s8 dx, s8 dy)}
 
   const D = {                          // ISO state
     handle: null, name: '', fileSize: 0, chars: [], tables: {}, schema: null, maps: {},
-    itemNames: {}, segs: [], loaded: false, view: 'chars', charIdx: 0, tableId: 0,
+    itemNames: {}, segs: [], loaded: false, view: 'chars', charIdx: 0, tableId: 0, shapeId: 0,
     edits: new Map(),                  // key "abs:w" -> {group,label,oldDisp,newDisp}
   };
 
@@ -91,6 +93,7 @@
     const r = [];
     D.chars.forEach((c) => { if (typeof c.offset === 'number') r.push([c.offset, c.offset + RECORD_LEN]); });
     Object.values(D.tables).forEach((t) => r.push([t.base, t.base + t.count * t.stride]));
+    r.push([SHAPE_BASE, SHAPE_BASE + SHAPE_TOTAL]);   // area shape library (not a fixed-stride table)
     return r.sort((a, b) => a[0] - b[0]);
   }
   function mergeRanges(ranges) {
@@ -221,8 +224,8 @@
     const tabs = [
       ['chars', 'Characters'], ['items', 'Items'], ['shop', 'Shops'], ['runeshop', 'Rune shops'],
       ['itemprice', 'Prices'], ['skills', 'Skills'], ['runes', 'Runes'], ['abilities', 'Spells'],
-      ['enemies', 'Enemies'], ['ref', 'Reference'],
-    ].filter(([k]) => k === 'chars' || k === 'ref' || D.tables[k]);
+      ['shapes', 'Shapes'], ['enemies', 'Enemies'], ['ref', 'Reference'],
+    ].filter(([k]) => k === 'chars' || k === 'ref' || k === 'shapes' || D.tables[k]);
     $('#isoViewTabs').innerHTML = tabs.map(([k, l]) =>
       `<button class="viewtab${k === D.view ? ' active' : ''}" data-view="${k}">${l}</button>`).join('');
     $$('#isoViewTabs .viewtab').forEach((b) => b.onclick = () => setView(b.dataset.view));
@@ -233,6 +236,7 @@
     if (v === 'chars') renderChars();
     else if (v === 'ref') renderReference();
     else if (v === 'runes') renderRunes();
+    else if (v === 'shapes') renderShapes();
     else renderTable(v);
   }
 
@@ -432,6 +436,105 @@
     const kids = [numControl(recOff + 4, 2, grp, 'Value', 0, 65535)];
     for (let lv = 0; lv < 4; lv++) {
       kids.push(listPickerControl(recOff + 0x12 + lv, 1, grp, `Level ${lv + 1} spell`, abilityItems(), abilityLabel));
+    }
+    host.appendChild(grid(kids));
+  }
+
+  /* ----------------------------------------------------- area shapes ------
+   * Spell/technique AREA comes from this 142-entry library of (dx, dy)
+   * offset lists, NOT from the ability record: at targeting time the game
+   * expands the shape a spell maps to (the mapping itself is picked in
+   * code). Verified live in PCSX2 (round 7): shape 0 = Eternal Ordeal,
+   * shape 133 = Double-Edged Sword. Shapes are shared between spells,
+   * techniques and other systems, so editing one changes every user of it.
+   * A shape may only grow within its padded disc block (capacity), which
+   * keeps every other shape's offset valid. Spell RANGE is a separate
+   * flood-fill limit in code and is not editable data. */
+  const SHAPE_KNOWN = { 0: 'Eternal Ordeal', 133: 'Double-Edged Sword' };
+  function shapeCount() { return rd(SHAPE_BASE + 4, 4); }
+  function shapeOff(i) { return rd(SHAPE_BASE + 8 + 4 * i, 4); }
+  function shapeDataAbs(i) { return SHAPE_BASE + 8 + 4 * shapeCount() + shapeOff(i); }
+  function shapeLen(i) { return rd(shapeDataAbs(i), 4); }
+  function shapeCap(i) {
+    const n = shapeCount();
+    const end = (i + 1 < n) ? shapeOff(i + 1) : SHAPE_TOTAL - 8 - 4 * n;
+    return (end - shapeOff(i) - 4) / 2;
+  }
+  function s8(v) { return v > 127 ? v - 256 : v; }
+  function shapePair(i, k) { const a = shapeDataAbs(i) + 4 + 2 * k; return [s8(rd(a, 1)), s8(rd(a + 1, 1))]; }
+
+  function s8Control(abs, group, label) {
+    const d = document.createElement('div'); d.className = 'fld';
+    const dirty = rd(abs, 1) !== rdOrig(abs, 1);
+    d.innerHTML = `<label>${escapeHtml(label)}${dirty ? '<button class="revert" title="revert" type="button">↺</button>' : ''}</label>
+      <input type="number" min="-16" max="16" value="${s8(rd(abs, 1))}">`;
+    if (dirty) d.classList.add('chg');
+    const inp = d.querySelector('input');
+    inp.oninput = () => {
+      let v = parseInt(inp.value, 10); if (isNaN(v)) v = 0; v = Math.max(-16, Math.min(16, v));
+      wrVal(abs, 1, v & 0xFF);
+      d.classList.toggle('chg', rd(abs, 1) !== rdOrig(abs, 1));
+      reconcileEdit(abs, 1, group, label, (x) => String(s8(x)));
+    };
+    inp.onchange = () => rerender();
+    if (dirty) d.querySelector('.revert').onclick = () => { wrVal(abs, 1, rdOrig(abs, 1)); reconcileEdit(abs, 1, group, label, (x) => String(s8(x))); rerender(); };
+    return d;
+  }
+
+  function renderShapes() {
+    const host = $('#isoView'); host.innerHTML = '';
+    const n = shapeCount();
+    if (D.shapeId >= n) D.shapeId = 0;
+    const id = D.shapeId, grp = `shape:${id}`, dataAbs = shapeDataAbs(id);
+    const len = shapeLen(id), cap = shapeCap(id);
+    const sel = document.createElement('div'); sel.className = 'row';
+    sel.innerHTML = `<div style="flex:1;min-width:220px"><label>Area shape</label>
+      <select id="isoShapeSel">${Array.from({ length: n }, (_, i) => `<option value="${i}"${i === id ? ' selected' : ''}>#${i} — ${shapeLen(i)} panels${SHAPE_KNOWN[i] ? ` (${SHAPE_KNOWN[i]})` : ''}</option>`).join('')}</select></div>
+      <div class="muted" style="align-self:end">@0x${dataAbs.toString(16).toUpperCase()} · block capacity ${cap} panels</div>`;
+    host.appendChild(sel);
+    sel.querySelector('#isoShapeSel').onchange = (e) => { D.shapeId = +e.target.value; renderShapes(); };
+    const note = document.createElement('div'); note.className = 'fnote'; note.style.marginBottom = '6px';
+    note.textContent = 'A spell\'s area is one of these (dx, dy) offset lists, expanded around the target tile at cast time. '
+      + 'Shapes are shared, so editing one changes every spell or technique that uses it. Verified users: #0 = Eternal Ordeal, #133 = Double-Edged Sword; '
+      + 'the game picks the shape for each spell in code, so the other mappings are not listed. A shape can only grow within its padded block (capacity above) — '
+      + 'shrinking and reshaping are free. Spell range is computed in code (a flood-fill limit) and is not stored here or in the spell record.';
+    host.appendChild(note);
+    // preview grid
+    const pairs = Array.from({ length: len }, (_, k) => shapePair(id, k));
+    if (pairs.length) {
+      const xs = pairs.map((p) => p[0]), ys = pairs.map((p) => p[1]);
+      const inSet = new Set(pairs.map((p) => p[0] + ',' + p[1]));
+      const wrap = document.createElement('div'); wrap.style.margin = '4px 0 10px';
+      for (let y = Math.min(...ys); y <= Math.max(...ys); y++) {
+        const row = document.createElement('div'); row.style.lineHeight = '0';
+        for (let x = Math.min(...xs); x <= Math.max(...xs); x++) {
+          const c = document.createElement('span');
+          const on = inSet.has(x + ',' + y), origin = x === 0 && y === 0;
+          c.style.cssText = `display:inline-block;width:15px;height:15px;margin:1px;border-radius:3px;background:${origin ? '#e0a800' : on ? '#b85450' : 'rgba(128,128,128,0.15)'}`;
+          c.title = `(${x}, ${y})`;
+          row.appendChild(c);
+        }
+        wrap.appendChild(row);
+      }
+      host.appendChild(wrap);
+    }
+    // panel count (custom: changing it re-renders the pair rows)
+    const kids = [];
+    const cd = document.createElement('div'); cd.className = 'fld';
+    const cDirty = rd(dataAbs, 4) !== rdOrig(dataAbs, 4);
+    cd.innerHTML = `<label>Panel count (max ${cap})${cDirty ? '<button class="revert" title="revert" type="button">↺</button>' : ''}</label>
+      <input type="number" min="0" max="${cap}" value="${len}">`;
+    if (cDirty) cd.classList.add('chg');
+    const cinp = cd.querySelector('input');
+    cinp.onchange = () => {
+      let v = parseInt(cinp.value, 10); if (isNaN(v)) v = 0; v = Math.max(0, Math.min(cap, v));
+      wrVal(dataAbs, 4, v); reconcileEdit(dataAbs, 4, grp, 'Panel count', String); rerender();
+    };
+    if (cDirty) cd.querySelector('.revert').onclick = () => { wrVal(dataAbs, 4, rdOrig(dataAbs, 4)); reconcileEdit(dataAbs, 4, grp, 'Panel count', String); rerender(); };
+    kids.push(cd);
+    for (let k = 0; k < len; k++) {
+      kids.push(s8Control(dataAbs + 4 + 2 * k, grp, `Panel ${k + 1} dx`));
+      kids.push(s8Control(dataAbs + 5 + 2 * k, grp, `Panel ${k + 1} dy`));
     }
     host.appendChild(grid(kids));
   }

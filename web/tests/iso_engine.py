@@ -88,6 +88,20 @@ try:
     ok(by_off[0x3A] == 3 and by_off[0x38] == 257,
        "abilities set/read round-trip (Lightning Force element = 3, effect class = 257)")
 
+    # area shape table (RE round 7, 2026-11-15): 142-entry (dx, dy) offset-list
+    # library at 0x35FDC00; decode a synthetic 2-shape table poked into the disc
+    import struct as _struct
+    with open(path, "r+b") as f:
+        f.seek(stpatch.SHAPE_BASE)
+        f.write(_struct.pack("<II", 0, 2))                 # zero word + count
+        f.write(_struct.pack("<II", 0, 12))                # block offsets
+        f.write(_struct.pack("<Ibb", 1, 0, 0) + b"\x00" * 6)   # shape 0: 1 pair, block 12
+        f.write(_struct.pack("<Ibbbb", 2, 1, 0, 0, 1))     # shape 1: 2 pairs
+    shapes = stpatch.decode_shapes(ed.read_bytes)
+    ok(len(shapes) == 2 and shapes[0]["pairs"] == [[0, 0]] and shapes[0]["capacity"] == 4
+       and shapes[1]["pairs"] == [[1, 0], [0, 1]],
+       "shape table decode (count/offsets/pairs/capacity)")
+
     # skills table sits at the corrected base 0x3652E10 (V11 framing was +0x10)
     ok(tables["skills"]["base"] == 0x3652E10 and tables["skills"]["count"] == 36,
        "skills table base/count corrected (0x3652E10 x36)")
