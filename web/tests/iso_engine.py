@@ -121,6 +121,21 @@ try:
        and stpatch.spell_area_offset(12) == stpatch.DESC_BASE + 12 * stpatch.DESC_STRIDE + 0x32,
        "descriptor decode, unshifted (Silent Lake record 12)")
 
+    # casting time = s16 at descriptor record +0x3C (RE round 11), same
+    # routing as range/area including the RoP shift: record 33 carries
+    # Double-Edged Sword's 4, record 31 carries Eternal Ordeal's 0.
+    with open(path, "r+b") as f:
+        for rec, ct in ((31, 0), (33, 4), (35, 10)):
+            f.seek(stpatch.DESC_BASE + rec * stpatch.DESC_STRIDE + stpatch.CASTTIME_OFF)
+            f.write(_struct.pack("<h", ct))
+    ok(stpatch.decode_spell_casttime(ed.read_bytes, 31) == 0,
+       "casttime decode, unshifted (Eternal Ordeal record 31 = 0)")
+    ok(stpatch.decode_spell_casttime(ed.read_bytes, 32) == 4
+       and stpatch.spell_casttime_offset(32) == stpatch.DESC_BASE + 33 * stpatch.DESC_STRIDE + 0x3C,
+       "casttime decode, RoP shift (Double-Edged Sword reads record 33)")
+    ok(stpatch.decode_spell_casttime(ed.read_bytes, 34) == 10,
+       "casttime decode, RoP shift (Everlasting Mercy reads record 35)")
+
     # skills table sits at the corrected base 0x3652E10 (V11 framing was +0x10)
     ok(tables["skills"]["base"] == 0x3652E10 and tables["skills"]["count"] == 36,
        "skills table base/count corrected (0x3652E10 x36)")

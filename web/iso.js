@@ -24,7 +24,8 @@
   const SHAPE_TOTAL = 0x22F0;         // count x u32 block offsets, then {u32 n, n x (s8 dx, s8 dy)}
   const DESC_BASE = 0x3610610;        // spell descriptor table (RE round 9, segment 0xCD74):
   const DESC_STRIDE = 0x50;           // record per ability id; spell RANGE = s16 at +0x30,
-  const DESC_COUNT = 221;             // spell AREA shape = s16 at +0x32 (RE round 10)
+  const DESC_COUNT = 221;             // spell AREA shape = s16 at +0x32 (RE round 10),
+                                      // spell CASTING time = s16 at +0x3C (RE round 11)
 
   // Descriptor record the game reads for an ability (RE round 10): an extra
   // record (32: range 6, area 0, no matching ability) sits in the descriptor
@@ -703,22 +704,27 @@
       return numControl(recOff + f.off, f.w, grp, f.label, 0, (1 << (8 * f.w)) - 1);
     })));
 
-    // spell range + area shape (RE rounds 9-10): NOT in the ability record —
-    // they are the s16 fields at +0x30 (range) and +0x32 (area shape) of the
-    // spell's record in the descriptor table (runtime segment 0xCD74; see
-    // descId for the Rune of Punishment record shift). Both are shape-library
-    // indices: the targeting zone is the range shape filtered by on-map +
+    // spell range + area shape + casting time (RE rounds 9-11): NOT in the
+    // ability record — they are the s16 fields at +0x30 (range), +0x32
+    // (area shape) and +0x3C (casting time) of the spell's record in the
+    // descriptor table (runtime segment 0xCD74; see descId for the Rune of
+    // Punishment record shift). Range and area are shape-library indices:
+    // the targeting zone is the range shape filtered by on-map +
     // height < 3 (0-8 = diamond radius, 47 = terrain-wide), and the area
-    // shape is expanded around the target tile. Both verified in game
+    // shape is expanded around the target tile. Casting time is the chant
+    // time before the spell resolves (0 = immediate). All verified in game
     // (range: Eternal Ordeal 6 → 2 shrank its zone 54 → 13 panels; area:
-    // Double-Edged Sword reassigned 133 → 46 turned its 3x3 into a 7x7).
+    // Double-Edged Sword reassigned 133 → 46 turned its 3x3 into a 7x7;
+    // casting time: Eternal Ordeal 0 → 240 left the caster chanting
+    // through the next round instead of resolving on cast).
     if (name === 'abilities') {
       const p4 = document.createElement('div'); p4.className = 'fnote'; p4.style.margin = '6px 0';
-      p4.textContent = 'Range and Area shape (below) are stored per spell in a separate descriptor table and verified in game. Range is how far this spell can be targeted; Area shape is the pattern of panels it hits around the target (sculpt the shapes themselves on the Shapes tab). The Rune of Punishment spells after Eternal Ordeal read the next descriptor record up (Double-Edged Sword uses record 33) — the editor handles that shift for you.';
+      p4.textContent = 'Range, Area shape and Casting time (below) are stored per spell in a separate descriptor table and verified in game. Range is how far this spell can be targeted; Area shape is the pattern of panels it hits around the target (sculpt the shapes themselves on the Shapes tab); Casting time is the chant time before the spell resolves (0 fires immediately; higher values leave the caster chanting while the battle continues — stock spells run 0 to 16). The Rune of Punishment spells after Eternal Ordeal read the next descriptor record up (Double-Edged Sword uses record 33) — the editor handles that shift for you.';
       host.appendChild(p4);
       host.appendChild(grid([
         numControl(descOff(D.tableId, 0x30), 2, grp, 'Range', 0, 141),
         shapePickControl(descOff(D.tableId, 0x32), grp, 'Area shape'),
+        numControl(descOff(D.tableId, 0x3C), 2, grp, 'Casting time', 0, 999),
       ]));
     }
   }

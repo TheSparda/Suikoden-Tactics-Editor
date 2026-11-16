@@ -237,7 +237,7 @@ rounds 3–4.
   panel-count + per-panel dx/dy editing within block capacity) reading
   the region via collectRanges (SHAPE_BASE/SHAPE_TOTAL in web/iso.js).
 
-### Spell descriptor table (range + area) — FOUND and editor-wired (2026-11-15, rounds 9-10)
+### Spell descriptor table (range + area + casting time) — FOUND and editor-wired (2026-11-15/16, rounds 9-11)
 - Runtime segment 0xCD74. Header at ISO 0x3610610: s16 +0 = 1 (type),
   s16 +2 = 0x50 (stride), s16 +4 = 221 (count). Record for ability id
   (1-based; record 0 is a dummy) at 0x3610610 + id x 0x50. The grid is
@@ -262,9 +262,24 @@ rounds 3–4.
   (record 33 +0x32 133 -> 46 turned its area 3x3 into the 7x7; +0x30
   6 -> 2 shrank its zone 54 -> 13; record 32 writes changed nothing)
   and for Eternal Ordeal at record 31 (+0x32 0 -> 45 gave it the 5x5);
-  Voice of Death / Everlasting Mercy follow the same shift (their
-  stored values match the guide only under it). Editor mapping:
+  Voice of Death / Everlasting Mercy were inferred from the same shift
+  in round 10 and proven live in round 11 (Voice of Death's area read
+  1 panel = record 34's shape 0, not record 33's 133; Everlasting
+  Mercy's read 25 panels = record 35's shape 134). Editor mapping:
   stpatch.desc_record_id / web descId().
+- **Spell CASTING TIME = s16 at record +0x3C** (round 11, RESOLVED):
+  the chant time before the spell resolves. Every rune spell whose
+  text says "Casting time: Instantaneous" stores 0 (19/19); the rest
+  store small values that rise with the text class within every rune
+  family (Fast 4-10, Medium 10-12, Slow 10-16). Proven live: Eternal
+  Ordeal patched 0 -> 240 in RAM before its targeting opened did not
+  resolve on cast (no MP spent, no damage); the caster entered a
+  chanting state (glowing aura, purple marker under his turn-order
+  icon) and was still chanting a full round later. The same write
+  after targeting had opened changed nothing, so the value is latched
+  when targeting opens. Editor wiring: stpatch CASTTIME_OFF +
+  spell_casttime_offset/decode_spell_casttime; Spells tab "Casting
+  time" numeric field (0-999).
 - Game accessors: func_0031F3C8 (record resolve), func_0031F5E8
   (field index in s16 units from +0x30: field 0 = range, with a grade-up
   ladder = the likely S-rank +1 route; field 1 = area, a plain read),
@@ -272,10 +287,11 @@ rounds 3–4.
   builders func_002C81B8 and func_002C82F0. In RAM the segment data is
   at 0xBCAF80 (records 0xBCAF90); segment pointers are cached in the
   hash table at RAM 0x4AAE8C.
-- Editor wiring: st_tables.json "descriptors" + Range and Area shape
-  fields on the Spells tab (web/iso.js, RoP shift applied); the Shapes
-  tab lists each shape's rune-spell users; stpatch.py
-  DESC_BASE/DESC_STRIDE + decode_spell_range/decode_spell_area.
+- Editor wiring: st_tables.json "descriptors" + Range, Area shape and
+  Casting time fields on the Spells tab (web/iso.js, RoP shift applied);
+  the Shapes tab lists each shape's rune-spell users; stpatch.py
+  DESC_BASE/DESC_STRIDE + decode_spell_range/decode_spell_area/
+  decode_spell_casttime.
 
 ### Open questions / to verify
 - Exact per-field byte offsets within each record (parser saw explicit re-seeks;

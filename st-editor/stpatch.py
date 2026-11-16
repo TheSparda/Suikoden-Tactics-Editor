@@ -109,6 +109,19 @@ DESC_BASE = 0x3610610
 DESC_STRIDE = 0x50
 RANGE_OFF = 0x30
 AREA_OFF = 0x32
+# Spell CASTING TIME is the s16 at record +0x3C (RE round 11): the chant
+# time before the spell resolves. 0 = the spell fires immediately (every
+# spell whose text says "Casting time: Instantaneous" stores 0); larger
+# values keep the caster in a chanting state (glowing aura, purple marker
+# in the turn order) while the battle continues, and the spell fires when
+# the chant completes. Values rise monotonically with the text classes
+# across all 34 rune spells (Fast 4-10, Medium 10-12, Slow 10-16) and the
+# field follows the same descriptor routing as range/area, RoP shift
+# included. Proven live: Eternal Ordeal patched 0 -> 240 in RAM before
+# its targeting opened did not resolve on cast; the caster chanted
+# through the following round instead. The same write after targeting
+# had opened changed nothing, so the value is latched at targeting time.
+CASTTIME_OFF = 0x3C
 
 
 def desc_record_id(ability_id):
@@ -124,6 +137,10 @@ def spell_area_offset(ability_id):
     return DESC_BASE + desc_record_id(ability_id) * DESC_STRIDE + AREA_OFF
 
 
+def spell_casttime_offset(ability_id):
+    return DESC_BASE + desc_record_id(ability_id) * DESC_STRIDE + CASTTIME_OFF
+
+
 def decode_spell_range(read, ability_id):
     """read(offset, n) -> bytes. Return the stored range (shape index)."""
     return struct.unpack("<h", read(spell_range_offset(ability_id), 2))[0]
@@ -132,6 +149,11 @@ def decode_spell_range(read, ability_id):
 def decode_spell_area(read, ability_id):
     """read(offset, n) -> bytes. Return the stored area shape index."""
     return struct.unpack("<h", read(spell_area_offset(ability_id), 2))[0]
+
+
+def decode_spell_casttime(read, ability_id):
+    """read(offset, n) -> bytes. Return the stored casting (chant) time."""
+    return struct.unpack("<h", read(spell_casttime_offset(ability_id), 2))[0]
 
 
 class ISOEditor:
