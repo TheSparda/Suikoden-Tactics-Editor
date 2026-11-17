@@ -407,12 +407,11 @@
    * level (0 = no spell at that level). The packed field at +0x08 is not
    * understood yet, so it is deliberately not exposed. */
   // Range / area / casting-speed reference line for an ability (RE round 5,
-  // 2026-11-15): these are verified values (the game's own data sheets for
-  // speed; the Neoseeker rune guide cross-checked against them for range and
-  // area) shown read-only — they are NOT fields of the ability record.
-  // (Rounds 9-10: range and area shape ARE stored, in the descriptor table,
-  // and are editable below; this line stays the guide reference, and the
-  // only reference for casting speed.)
+  // 2026-11-15): verified values from the game's own data sheets (speed)
+  // and the Neoseeker rune guide cross-checked against them (range, area),
+  // shown as a cross-check next to the stored values. (Rounds 9-11: range,
+  // area shape and casting time are all stored in the descriptor table and
+  // editable below; this line is reference only.)
   function refLine(a) {
     const r = (a && a.ref) || {};
     const parts = [];
@@ -450,7 +449,7 @@
     sel.querySelector('#isoRuneSel').onchange = (e) => { D.tableId = +e.target.value; renderRunes(); };
     if (info.desc) { const p = document.createElement('div'); p.className = 'fnote'; p.style.marginBottom = '6px'; p.textContent = info.desc; host.appendChild(p); }
     const p2 = document.createElement('div'); p2.className = 'fnote'; p2.style.marginBottom = '6px';
-    p2.textContent = 'Pick which spell or technique the rune grants at each level. Advanced runes (Rage, Flowing…) share the basic rune\'s ladder shifted up — that is the game\'s own data, not a display merge.';
+    p2.textContent = 'Pick which spell or technique this rune grants at each level. Advanced runes (Rage, Flowing and the like) reuse the basic rune\'s spell list, shifted up a level. That is how the game\'s own data is stored, not a display merge.';
     host.appendChild(p2);
     const kids = [numControl(recOff + 4, 2, grp, 'Value', 0, 65535)];
     for (let lv = 0; lv < 4; lv++) {
@@ -520,19 +519,18 @@
     const sel = document.createElement('div'); sel.className = 'row';
     sel.innerHTML = `<div style="flex:1;min-width:220px"><label>Area shape</label>
       <select id="isoShapeSel">${Array.from({ length: n }, (_, i) => `<option value="${i}"${i === id ? ' selected' : ''}>#${i} — ${shapeLen(i)} panels${SHAPE_KNOWN[i] ? ` (${SHAPE_KNOWN[i]})` : ''}</option>`).join('')}</select></div>
-      <div class="muted" style="align-self:end">@0x${dataAbs.toString(16).toUpperCase()} · block capacity ${cap} panels</div>`;
+      <div class="muted" style="align-self:end">@0x${dataAbs.toString(16).toUpperCase()} · room for ${cap} panels max</div>`;
     host.appendChild(sel);
     sel.querySelector('#isoShapeSel').onchange = (e) => { D.shapeId = +e.target.value; renderShapes(); };
     const note = document.createElement('div'); note.className = 'fnote'; note.style.marginBottom = '6px';
-    note.textContent = 'A spell\'s area is one of these (dx, dy) offset lists, expanded around the target tile at cast time. '
-      + 'Which shape a spell uses is stored per spell in the descriptor table (RE round 10) — reassign it per spell on the Spells tab (Area shape). '
-      + 'Shapes are shared, so editing one changes every spell or technique that uses it; to give a spell a fully custom area, sculpt a shape no spell uses '
-      + '(see below) and assign it to the spell. A shape can only grow within its padded block (capacity above) — '
-      + 'shrinking and reshaping are free. Spell range is also stored per spell in the descriptor table — edit it on the Spells tab.';
+    note.textContent = 'A shape is the pattern of panels a spell or technique hits around its target tile. Pick one to see its pattern and edit it panel by panel. '
+      + 'Shapes are shared: changing one changes every spell that uses it. To give a single spell a custom area, sculpt a shape no spell uses (see the line below) '
+      + 'and assign it to that spell on the Spells tab. Each shape has room for a fixed number of panels (shown above): you can shrink or rearrange it freely, '
+      + 'but it cannot grow past that room. To change which shape a spell uses, or how far it reaches, go to the Spells tab (Area shape and Range).';
     host.appendChild(note);
     const users = spellShapeUsers(id);
     const u = document.createElement('div'); u.className = 'fnote'; u.style.marginBottom = '6px';
-    u.textContent = users.length ? `Used as the area of: ${users.join(', ')}.` : 'Not the area of any rune spell — safe to sculpt as a custom shape.';
+    u.textContent = users.length ? `Spells using this shape: ${users.join(', ')}.` : 'No rune spell uses this shape, so it is safe to sculpt into a custom shape.';
     host.appendChild(u);
     // preview grid
     const pairs = Array.from({ length: len }, (_, k) => shapePair(id, k));
@@ -552,6 +550,9 @@
         wrap.appendChild(row);
       }
       host.appendChild(wrap);
+      const legend = document.createElement('div'); legend.className = 'fnote'; legend.style.marginBottom = '6px';
+      legend.textContent = 'Gold tile: where the spell is targeted. Red tiles: panels the spell hits.';
+      host.appendChild(legend);
     }
     // panel count (custom: changing it re-renders the pair rows)
     const kids = [];
@@ -568,8 +569,8 @@
     if (cDirty) cd.querySelector('.revert').onclick = () => { wrVal(dataAbs, 4, rdOrig(dataAbs, 4)); reconcileEdit(dataAbs, 4, grp, 'Panel count', String); rerender(); };
     kids.push(cd);
     for (let k = 0; k < len; k++) {
-      kids.push(s8Control(dataAbs + 4 + 2 * k, grp, `Panel ${k + 1} dx`));
-      kids.push(s8Control(dataAbs + 5 + 2 * k, grp, `Panel ${k + 1} dy`));
+      kids.push(s8Control(dataAbs + 4 + 2 * k, grp, `Panel ${k + 1} x (left/right)`));
+      kids.push(s8Control(dataAbs + 5 + 2 * k, grp, `Panel ${k + 1} y (up/down)`));
     }
     host.appendChild(grid(kids));
   }
@@ -630,9 +631,9 @@
     const n = shapeCount();
     const cur = rd(abs, 2), dirty = cur !== rdOrig(abs, 2);
     const fmt = (v) => `#${v} — ${v >= 0 && v < n ? shapeLen(v) : '?'} panels`;
-    const opts = Array.from({ length: n }, (_, i) => `<option value="${i}"${i === cur ? ' selected' : ''}>#${i} — ${shapeLen(i)} panels${SHAPE_KNOWN[i] ? ` (${SHAPE_KNOWN[i]})` : ''}</option>`).join('');
+    const opts = Array.from({ length: n }, (_, i) => `<option value="${i}"${i === cur ? ' selected' : ''}>#${i} — ${shapeLen(i)} panels</option>`).join('');
     d.innerHTML = `<label>${escapeHtml(label)}${dirty ? '<button class="revert" title="revert" type="button">↺</button>' : ''}</label>
-      <select>${cur < 0 || cur >= n ? `<option value="${cur}" selected>#${cur} (outside library)</option>` : ''}${opts}</select>`;
+      <select title="Shape #${cur}${SHAPE_KNOWN[cur] ? ` (${SHAPE_KNOWN[cur]})` : ''}">${cur < 0 || cur >= n ? `<option value="${cur}" selected>#${cur} (outside library)</option>` : ''}${opts}</select>`;
     if (dirty) d.classList.add('chg');
     const sel = d.querySelector('select');
     sel.onchange = () => { wrVal(abs, 2, +sel.value); reconcileEdit(abs, 2, group, label, fmt); rerender(); };
@@ -645,7 +646,7 @@
     const t = D.tables[name]; if (!t) { host.textContent = 'No such table.'; return; }
     if (D.tableId >= t.count) D.tableId = 0;
     const sel = document.createElement('div'); sel.className = 'row';
-    sel.innerHTML = `<div style="flex:1;min-width:220px"><label>${name} record</label>
+    sel.innerHTML = `<div style="flex:1;min-width:220px"><label>${name === 'abilities' ? 'Spell / technique' : `${name} record`}</label>
       <select id="isoTblSel">${Array.from({ length: t.count }, (_, i) => `<option value="${i}"${i === D.tableId ? ' selected' : ''}>${escapeHtml(tableRowName(name, i))}</option>`).join('')}</select></div>
       <div class="muted" style="align-self:end">${recordName(name, D.tableId) ? escapeHtml(recordName(name, D.tableId)) + ' · ' : ''}@0x${(t.base + D.tableId * t.stride).toString(16).toUpperCase()} · stride 0x${t.stride.toString(16).toUpperCase()}</div>`;
     host.appendChild(sel);
@@ -667,12 +668,15 @@
     // heals store their heal power here.
     if (name === 'abilities') {
       const p = document.createElement('div'); p.className = 'fnote'; p.style.marginBottom = '6px';
-      p.textContent = 'Power = the spell/technique\'s strength value (damage for attacks, heal amount for heals). Three records disagree with their own description text (Furious Blow, Double-Edged Sword, Everlasting Mercy) — their real power lives in another field, so treat edits there as untested. Element uses the character-record codes (0 none, 1 Fire, 2 Wind, 3 Earth, 4 Lightning, 5 Water, 9 Punishment). Effect class: 257 = terrain change, 1025 = standard targeted, 5633 = terrain-wide, 6145 = instant death, 6401 = random panels.';
+      p.innerHTML = '<b>Power</b> is how strong the spell or technique is: damage for attacks, healing for heals.<br>'
+        + '<b>Element</b>: 0 none, 1 Fire, 2 Wind, 3 Earth, 4 Lightning, 5 Water, 9 Punishment.<br>'
+        + '<b>Effect class</b>: 257 changes the terrain, 1025 standard targeted, 5633 the whole terrain, 6145 instant death, 6401 random panels.<br>'
+        + 'Heads up: Furious Blow, Double-Edged Sword and Everlasting Mercy do not use the Power value shown here (their real power is stored somewhere else), so editing Power for those three may not change anything in game.';
       host.appendChild(p);
       const ab = (D.runeSpells && D.runeSpells.abilities[String(D.tableId)]) || {};
       if (ab.desc) { const p2 = document.createElement('div'); p2.className = 'fnote'; p2.style.marginBottom = '6px'; p2.textContent = ab.desc; host.appendChild(p2); }
       const rl = refLine(ab);
-      if (rl) { const p3 = document.createElement('div'); p3.className = 'fnote'; p3.style.marginBottom = '6px'; p3.textContent = `${rl} (guide reference — casting speed is not stored as a plain field and stays read-only; range and area shape ARE stored, in a descriptor table, and are editable below)`; host.appendChild(p3); }
+      if (rl) { const p3 = document.createElement('div'); p3.className = 'fnote'; p3.style.marginBottom = '6px'; p3.textContent = `${rl} (from the game's data sheets and guides, for reference: the stored values you can edit are in the fields below)`; host.appendChild(p3); }
     }
 
     const recOff = t.base + D.tableId * t.stride;
@@ -719,13 +723,18 @@
     // through the next round instead of resolving on cast).
     if (name === 'abilities') {
       const p4 = document.createElement('div'); p4.className = 'fnote'; p4.style.margin = '6px 0';
-      p4.textContent = 'Range, Area shape and Casting time (below) are stored per spell in a separate descriptor table and verified in game. Range is how far this spell can be targeted; Area shape is the pattern of panels it hits around the target (sculpt the shapes themselves on the Shapes tab); Casting time is the chant time before the spell resolves (0 fires immediately; higher values leave the caster chanting while the battle continues — stock spells run 0 to 16). The Rune of Punishment spells after Eternal Ordeal read the next descriptor record up (Double-Edged Sword uses record 33) — the editor handles that shift for you.';
+      p4.innerHTML = '<b>Range</b>, <b>Area shape</b> and <b>Casting time</b> decide how this spell behaves in battle, and all three are stored values you can edit here.<br>'
+        + 'Range: how far away the spell can be targeted. Area shape: the pattern of panels it hits around the target (you can sculpt the shapes themselves on the Shapes tab).<br>'
+        + 'Casting time: how long the caster chants before the spell fires. 0 fires at once; higher values leave the caster chanting while the battle continues. Stock spells use 0 to 16.<br>'
+        + 'Good to know: the three Rune of Punishment spells after Eternal Ordeal (Double-Edged Sword, Voice of Death, Everlasting Mercy) store these values one record over. The editor handles that for you.';
       host.appendChild(p4);
-      host.appendChild(grid([
+      const descGrid = grid([
         numControl(descOff(D.tableId, 0x30), 2, grp, 'Range', 0, 141),
         shapePickControl(descOff(D.tableId, 0x32), grp, 'Area shape'),
         numControl(descOff(D.tableId, 0x3C), 2, grp, 'Casting time', 0, 999),
-      ]));
+      ]);
+      descGrid.style.gridTemplateColumns = 'repeat(auto-fill,minmax(200px,1fr))';
+      host.appendChild(descGrid);
     }
   }
 
