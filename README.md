@@ -35,6 +35,22 @@ item / shop / rune-shop / price / skill / enemy tables. Reads only the bounded
 editable region, writes back only the changed byte-runs, and can export a
 `.stmod` recipe or a standard `.xdelta` patch.
 
+**Spell editing** (ISO editor, added November 2026): three tabs cover the
+game's spells and techniques:
+
+- **Runes:** pick which spell or technique each of the 60 runes grants at
+  levels 1 to 4, and edit the rune's value.
+- **Spells:** for all 221 spells and techniques, edit Power, Element and
+  Effect class, plus range, area shape and casting time (0 casts instantly).
+  Area shapes come from the game's own 142-shape library.
+- **Shapes:** view and sculpt the area shapes, and see which spells use
+  each shape.
+
+Spells granted by the Rune of Punishment after Eternal Ordeal read their
+range, area and casting time from the next record; the editor routes those
+reads and writes to the right place. Range, area and casting time were
+verified in game.
+
 See [`web/README.md`](web/README.md) for the full feature list and the depth
 layer (guide-derived item/rune notes, shop identification, undo/redo, presets,
 PWA/offline, tests).
