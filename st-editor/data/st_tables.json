@@ -450,7 +450,12 @@
    {
     "off": 20,
     "w": 2,
-    "label": "Rank E SP cost"
+    "label": "Rank E effect C"
+   },
+   {
+    "off": 24,
+    "w": 2,
+    "label": "Rank E upgrade SP cost"
    },
    {
     "off": 28,
@@ -464,6 +469,11 @@
    },
    {
     "off": 32,
+    "w": 2,
+    "label": "Rank D effect C"
+   },
+   {
+    "off": 36,
     "w": 2,
     "label": "Rank D upgrade SP cost"
    },
@@ -480,6 +490,11 @@
    {
     "off": 44,
     "w": 2,
+    "label": "Rank C effect C"
+   },
+   {
+    "off": 48,
+    "w": 2,
     "label": "Rank C upgrade SP cost"
    },
    {
@@ -494,6 +509,11 @@
    },
    {
     "off": 56,
+    "w": 2,
+    "label": "Rank B effect C"
+   },
+   {
+    "off": 60,
     "w": 2,
     "label": "Rank B upgrade SP cost"
    },
@@ -510,6 +530,11 @@
    {
     "off": 68,
     "w": 2,
+    "label": "Rank A effect C"
+   },
+   {
+    "off": 72,
+    "w": 2,
     "label": "Rank A upgrade SP cost"
    },
    {
@@ -524,6 +549,11 @@
    },
    {
     "off": 80,
+    "w": 2,
+    "label": "Rank S effect C"
+   },
+   {
+    "off": 84,
     "w": 2,
     "label": "Rank S upgrade SP cost"
    }

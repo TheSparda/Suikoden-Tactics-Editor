@@ -358,6 +358,13 @@ function renderChar() {
     d.querySelector('[data-mc]').oninput = (e) => { c.magic_current[i] = +e.target.value || 0; updateBadge(); };
     magic.appendChild(d);
   });
+
+  // refill every party member's casts (current := overall, all 4 slots)
+  const rcBtn = $('#refillCasts');
+  if (rcBtn) rcBtn.onclick = () => {
+    SVD.chars.forEach((ch) => { for (let i = 0; i < 4; i++) ch.magic_current[i] = ch.magic_overall[i]; });
+    renderChar(); updateBadge();
+  };
 }
 
 function numFld(label, obj, key, base) {

@@ -389,6 +389,17 @@
     const skillFmt = (v) => (v ? rankLabel(v) : 'off');
     host.appendChild(grid(G('skillrank').map((f) => listPickerControl(base + f.offset, f.w, grp('skills'), f.label, affItems, skillFmt))));
 
+    // Starting equipment: char record +0x28..0x4F holds 10 (u16 flags,
+    // u16 item id) pairs in the save equip layout (Body, Hands, Other 1-8),
+    // verified slot-for-slot against fresh saves (RE round 2). Only the
+    // item ids are exposed; the flags half is not understood yet.
+    host.appendChild(section('Starting equipment'));
+    const eqNote = document.createElement('div'); eqNote.className = 'fnote'; eqNote.style.marginBottom = '6px';
+    eqNote.textContent = 'The items this character carries when they join. Only the items are editable: each slot also holds a flag value that is not understood yet, and the editor leaves it untouched.';
+    host.appendChild(eqNote);
+    const eqSlots = ['Body', 'Hands', 'Other 1', 'Other 2', 'Other 3', 'Other 4', 'Other 5', 'Other 6', 'Other 7', 'Other 8'];
+    host.appendChild(grid(eqSlots.map((label, k) => tblPicker(base + 0x28 + 4 * k + 2, 2, grp('equip'), label, 'item'))));
+
     // Extra u16 (unconfirmed) — collapsible
     const extras = G('u16');
     if (extras.length) {
@@ -447,6 +458,7 @@
       <div class="muted" style="align-self:end">@0x${recOff.toString(16).toUpperCase()} · stride 0x${t.stride.toString(16).toUpperCase()}</div>`;
     host.appendChild(sel);
     sel.querySelector('#isoRuneSel').onchange = (e) => { D.tableId = +e.target.value; renderRunes(); };
+    host.appendChild(csvRow('runes'));
     if (info.desc) { const p = document.createElement('div'); p.className = 'fnote'; p.style.marginBottom = '6px'; p.textContent = info.desc; host.appendChild(p); }
     const p2 = document.createElement('div'); p2.className = 'fnote'; p2.style.marginBottom = '6px';
     p2.textContent = 'Pick which spell or technique this rune grants at each level. Advanced runes (Rage, Flowing and the like) reuse the basic rune\'s spell list, shifted up a level. That is how the game\'s own data is stored, not a display merge.';
@@ -641,6 +653,106 @@
     return d;
   }
 
+  // What effect A/B/C mean for the skills whose semantics are pinned
+  // (RE round 3, verified against the skills' own description text).
+  const SKILL_HINTS = {
+    1: 'For Counter Attack, effect A is the counter damage % at that rank.',
+    2: 'For Parry, effect A is the chance to parry % and effect B is the damage cut %.',
+    7: 'For Battle Lust, effect B is the number of attacks.',
+    10: 'For Skill Rune Mastery, effect A is the highest spell level the character can use.',
+    11: 'For Fire Magic, effect A is the magic power % at that rank.',
+    12: 'For Water Magic, effect A is the magic power % at that rank.',
+    13: 'For Wind Magic, effect A is the magic power % at that rank.',
+    14: 'For Lightning Magic, effect A is the magic power % at that rank.',
+    15: 'For Earth Magic, effect A is the magic power % at that rank.',
+    16: 'For Shield Magic, effect A is the magic power % at that rank.',
+    17: 'For Punishment Magic, effect A is the magic power % at that rank.',
+    18: 'For Concentration, effect A is the chance of being interrupted % (lower is better).',
+    19: 'For Magic Rune Mastery, effect A is the highest spell level the character can use.',
+    33: 'For Heal, effect C is the range, and it is this skill\'s main effect.',
+    35: 'For Back Up, effect C is the range, and it is this skill\'s main effect.',
+  };
+
+  /* ------------------------------------------------------------ CSV -------
+   * Per-table spreadsheet round-trip: export writes one row per record
+   * (id, name, then the table's fields by label, raw values); import reads
+   * the same shape back, matching columns by field label and staging every
+   * differing value as a normal edit (reviewable, undoable). */
+  function csvEscape(v) { v = String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+  function parseCSV(text) {
+    const rows = []; let row = [], cur = '', q = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (q) {
+        if (ch === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+        else cur += ch;
+      } else if (ch === '"') q = true;
+      else if (ch === ',') { row.push(cur); cur = ''; }
+      else if (ch === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; }
+      else if (ch !== '\r') cur += ch;
+    }
+    if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+    return rows.filter((r) => r.length > 1 || (r.length === 1 && r[0] !== ''));
+  }
+  function tableCSV(name) {
+    const t = D.tables[name];
+    const lines = [['id', 'name', ...t.fields.map((f) => f.label)].map(csvEscape).join(',')];
+    for (let id = 0; id < t.count; id++) {
+      lines.push([id, recordName(name, id), ...t.fields.map((f) => rd(t.base + id * t.stride + f.off, f.w))].map(csvEscape).join(','));
+    }
+    return lines.join('\n') + '\n';
+  }
+  function importTableCSV(name, text) {
+    const t = D.tables[name];
+    const rows = parseCSV(text);
+    if (!rows.length) throw new Error('the file is empty');
+    const head = rows[0];
+    const idCol = head.indexOf('id');
+    if (idCol < 0) throw new Error('no id column');
+    const colField = head.map((h) => t.fields.find((f) => f.label === h) || null);
+    if (!colField.some(Boolean)) throw new Error('no columns match this table (is this the right CSV?)');
+    let n = 0;
+    for (const row of rows.slice(1)) {
+      const id = parseInt(row[idCol], 10);
+      if (isNaN(id) || id < 0 || id >= t.count) continue;
+      t.fields.forEach((f, fi) => {
+        const ci = colField.indexOf(f);
+        if (ci < 0) return;
+        const v = parseInt(row[ci], 10);
+        if (isNaN(v)) return;
+        const abs = t.base + id * t.stride + f.off;
+        const clamped = Math.max(0, Math.min((1 << (8 * f.w)) - 1, v));
+        if (rd(abs, f.w) !== clamped) { wrVal(abs, f.w, clamped); reconcileEdit(abs, f.w, `table:${name}:${id}`, f.label, String); n++; }
+      });
+    }
+    return n;
+  }
+  function csvRow(name) {
+    const row = document.createElement('div'); row.className = 'row'; row.style.margin = '2px 0 8px';
+    row.innerHTML = `<button class="ghost" type="button" data-csv="export">Export CSV</button>
+      <button class="ghost" type="button" data-csv="import">Import CSV…</button>
+      <input type="file" accept=".csv,text/csv" style="display:none">${name === 'abilities' ? '<span class="muted">Record fields only: range, area shape and casting time are not in the CSV.</span>' : ''}`;
+    row.querySelector('[data-csv="export"]').onclick = () => {
+      const blob = new Blob([tableCSV(name)], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob); const a = document.createElement('a');
+      a.href = url; a.download = `suikoden-tactics-${name}.csv`; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      msg($('#isoOpenMsg'), `Exported ${name} as CSV (${D.tables[name].count} records).`, 'ok');
+    };
+    const file = row.querySelector('input[type=file]');
+    row.querySelector('[data-csv="import"]').onclick = () => file.click();
+    file.onchange = async () => {
+      if (!file.files[0]) return;
+      try {
+        const n = importTableCSV(name, await file.files[0].text());
+        msg($('#isoOpenMsg'), n ? `Imported ${n} changed value(s) into ${name}. Review and save from the bar below.` : `No changes in that CSV for ${name}.`, 'ok');
+        rerender();
+      } catch (e) { msg($('#isoOpenMsg'), 'CSV import failed: ' + (e.message || e), 'err'); }
+      file.value = '';
+    };
+    return row;
+  }
+
   function renderTable(name) {
     const host = $('#isoView'); host.innerHTML = '';
     const t = D.tables[name]; if (!t) { host.textContent = 'No such table.'; return; }
@@ -651,17 +763,26 @@
       <div class="muted" style="align-self:end">${recordName(name, D.tableId) ? escapeHtml(recordName(name, D.tableId)) + ' · ' : ''}@0x${(t.base + D.tableId * t.stride).toString(16).toUpperCase()} · stride 0x${t.stride.toString(16).toUpperCase()}</div>`;
     host.appendChild(sel);
     sel.querySelector('#isoTblSel').onchange = (e) => { D.tableId = +e.target.value; renderTable(name); };
+    host.appendChild(csvRow(name));
 
     // guide description for item / price records
     if ((name === 'items' || name === 'itemprice') && typeof itemDesc === 'function') {
       const nd = itemDesc(D.tableId);
       if (nd) { const p = document.createElement('div'); p.className = 'fnote'; p.style.marginBottom = '6px'; p.textContent = nd; host.appendChild(p); }
     }
-    // what the skills values mean (per the V11 editor + Suikoden Tactics guides)
+    // what the skills values mean (RE round 3, verified against the skills'
+    // own description text and value shapes in the ISO)
     if (name === 'skills') {
       const p = document.createElement('div'); p.className = 'fnote'; p.style.marginBottom = '6px';
-      p.textContent = 'Each skill has ranks E→S. "How strong" = effect strength at that rank (higher = stronger); "secondary" = a second effect some skills add; "upgrade SP cost" = Skill Points needed to raise the skill to that rank.';
+      p.textContent = 'Each skill has six ranks, E to S, and the values below are per rank.';
       host.appendChild(p);
+      const hint = SKILL_HINTS[D.tableId];
+      if (hint) { const ph = document.createElement('div'); ph.className = 'fnote'; ph.style.marginBottom = '6px'; ph.textContent = hint; host.appendChild(ph); }
+      const det = document.createElement('details'); det.style.marginBottom = '6px';
+      det.innerHTML = '<summary style="color:var(--muted);cursor:pointer">What the effect values mean</summary>'
+        + '<div class="fnote" style="margin-top:4px">Effect A, B and C are the skill\'s effect values at that rank; what each one does depends on the skill (the line above names them when we know them). '
+        + 'Most skills use A as their main effect; Heal and Back Up use C. Upgrade SP cost is the Skill Points needed to reach that rank.</div>';
+      host.appendChild(det);
     }
     // ability (spell/technique) power — RE 2026-11-15: +0x44 verified against
     // the game's own "Effect: Power N" description text for damage spells;
@@ -735,6 +856,20 @@
       ]);
       descGrid.style.gridTemplateColumns = 'repeat(auto-fill,minmax(200px,1fr))';
       host.appendChild(descGrid);
+      // Status success chance (RE round 5, offset corrected 2026-11-22):
+      // the hi byte of the u16 at ability record +0x42 (the byte at +0x43)
+      // reads as a percent on status spells and matches the guide on every
+      // one checked (Silent Lake 100, Wind of Sleep 80, Everlasting Mercy
+      // 90). The round-5 note pointed at +0x4A, but that word is 0 for
+      // several status spells and nonzero for a heal, so it is a different
+      // parameter. The low byte at +0x42 is still unknown, so the percent
+      // is shown read-only here, not exposed for edits.
+      const statusPct = rd(recOff + 0x43, 1);
+      if (statusPct) {
+        const p5 = document.createElement('div'); p5.className = 'fnote'; p5.style.marginTop = '6px';
+        p5.textContent = `Status success chance: this spell's record reads ${statusPct}%. Shown for reference only: it matches the guide on every status spell checked, but the field is not fully understood yet, so it is not editable.`;
+        host.appendChild(p5);
+      }
     }
   }
 

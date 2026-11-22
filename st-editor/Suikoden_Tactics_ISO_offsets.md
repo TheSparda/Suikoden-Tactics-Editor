@@ -192,8 +192,14 @@ rounds 3–4.
   range/area from the Neoseeker rune guide v1.6 cross-checked).
 - **Skills table base corrected: 0x3652E10** (the V11 framing 0x3652E20
   was +0x10 off), 36 records × 0x58: string pair (2k, 2k+1), then 6 rank
-  tiers × 12 bytes (effect A/B/C + SP cost; the rank-E tier's cost slot
-  holds its C value, so only ranks D–S have SP costs).
+  tiers × 12 bytes at +0x10 + 12t, each tier uniformly: effect A @+0,
+  effect B @+2, effect C @+4, SP cost to reach that rank @+8. (Verified
+  2026-11-22 against the ISO: Counter Attack SP costs read
+  150/250/400/800/1200/1500 at the +8 slots, Extra Move reads a single
+  400 at rank S, Heal's effect C reads 1..6. An earlier framing in this
+  doc, and the editor's field list built on it, mislabeled the +4 slot
+  as the SP cost and left the real +8 SP costs unexposed; both are now
+  corrected.)
 - Editor wiring: `st_tables.json` gained `runes` + `abilities` and the
   corrected `skills`; names/descriptions are decoded from the game's own
   text streams by `build_rune_spells.py` into `data/st_rune_spells.json`;
@@ -292,6 +298,19 @@ rounds 3–4.
   the Shapes tab lists each shape's rune-spell users; stpatch.py
   DESC_BASE/DESC_STRIDE + decode_spell_range/decode_spell_area/
   decode_spell_casttime.
+- Editor additions (2026-11-22, from the Suikoden 3/5 review): the
+  Characters tab exposes starting equipment (char record +0x28..0x4F,
+  the 10 (flags, item id) pairs; item ids only, flags untouched); the
+  Spells tab shows the status success chance as a read-only reference:
+  it is the hi byte of the u16 at ability record +0x42 (byte +0x43),
+  matching the guide on every status spell checked (100/80/90...). The
+  round-5 note pointed at +0x4A, but that word is 0 for several status
+  spells and nonzero for a heal spell, so +0x4A is a different
+  parameter; the +0x42 low byte is still unknown, hence read-only;
+  every generic table view and the
+  Runes tab gained CSV export/import (raw field values by label); the
+  save editor gained a party-wide "Refill all casts" preset (current
+  magic levels := overall levels for every character).
 
 ### Open questions / to verify
 - Exact per-field byte offsets within each record (parser saw explicit re-seeks;
